@@ -1,0 +1,373 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+using SirWordALot.Core;
+using SirWordALot.Views;
+
+namespace SirWordALot.Shell;
+
+/// <summary>Everything a view needs from the shell, passed by constructor so views
+/// stay independently constructible in the headless checks.</summary>
+public sealed record ShellContext(
+    Library Library,
+    Settings Settings,
+    Search Search,
+    Stats Stats,
+    ILookup Lookup,
+    Action<string> Toast,
+    Action<string, object?> Navigate);
+
+public sealed record NavItem(string Id, string Title, string Glyph);
+
+/// <summary>Implemented by views that can be navigated to with an argument,
+/// such as the Library opening a specific entry.</summary>
+public interface IReceivesArgument
+{
+    void Receive(object argument);
+}
+
+public sealed class MainWindow : Window
+{
+    private static readonly NavItem[] Items =
+    [
+        new("library", "ALL WORDS", "word"),
+        new("due", "DUE TODAY", "quiz"),
+        new("starred", "STARRED", "star"),
+        new("recent", "RECENT", "refresh"),
+        new("archived", "ARCHIVED", "folder"),
+        new("sentences", "SENTENCES", "notes"),
+        new("lookup", "LOOKUP", "search"),
+        new("quiz", "QUIZ", "refinement"),
+        new("decks", "DECKS", "deck"),
+        new("stats", "STATS", "stats"),
+        new("console", "CONSOLE", "terminal"),
+        new("settings", "SETTINGS", "settings"),
+    ];
+
+    private readonly Library _library;
+    private readonly Settings _settings;
+    private readonly ShellContext _context;
+    private readonly Dictionary<string, Control> _views = [];
+    private readonly Dictionary<string, Button> _navButtons = [];
+    private readonly Panel _overlay = new();
+    private readonly TextBlock _statusLeft = Ui.Label("SWL / ALL WORDS");
+    private readonly TextBlock _statusRight = Ui.Label("");
+
+    private Capture? _capture;
+
+    public IReadOnlyList<NavItem> Nav => Items;
+    public string CurrentViewId { get; private set; } = "";
+    public Border Titlebar { get; }
+    public Border SidebarPanel { get; }
+    public Border Footer { get; }
+    public ContentControl Host { get; } = new();
+    public TextBlock StatusRight => _statusRight;
+
+    public MainWindow(Library library, Settings settings, Search search, Stats stats, ILookup lookup)
+    {
+        _library = library;
+        _settings = settings;
+
+        Title = "Sir Word-a-lot";
+        SystemDecorations = SystemDecorations.None;
+        Background = Ui.Cream;
+        Width = 1180;
+        Height = 760;
+        MinWidth = 1040;
+        MinHeight = 680;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+        _context = new ShellContext(library, settings, search, stats, lookup, ShowToast,
+            (id, argument) => Navigate(id, argument));
+
+        Titlebar = BuildTitlebar();
+        SidebarPanel = BuildSidebar();
+        Footer = BuildFooter();
+
+        var body = Ui.Columns("170,*", SidebarPanel, Host);
+        Grid.SetRow(body, 1);
+
+        var root = Ui.Rows("43,*,42", Titlebar, body, Footer);
+        Content = new Border
+        {
+            BorderBrush = Ui.WindowBorder,
+            BorderThickness = new Thickness(1),
+            Child = new Panel { Children = { root, _overlay } },
+        };
+
+        Activated += (_, _) => Titlebar.Background = Ui.TitlebarActive;
+        Deactivated += (_, _) => Titlebar.Background = Ui.TitlebarInactive;
+        library.Changed += UpdateStatus;
+
+        Opened += (_, _) =>
+        {
+            _capture = new Capture(this, _settings, CaptureWord);
+            if (_settings.CaptureEnabled && !_capture.TryRegister())
+                ShowToast($"The {_settings.CaptureHotkey} hotkey is taken by another program.");
+
+            try
+            {
+                var backups = new Backups(_settings.BackupFolder);
+                backups.Write(_library, DateTime.UtcNow);
+                backups.Prune();
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // A backup failure must never block startup.
+            }
+        };
+
+        Closed += (_, _) =>
+        {
+            library.Changed -= UpdateStatus;
+            SaveBounds();
+            _capture?.Dispose();
+            foreach (var view in _views.Values) (view as IDisposable)?.Dispose();
+        };
+
+        RestoreBounds();
+        KeyDown += OnKeyDown;
+        Navigate("library");
+    }
+
+    private Border BuildTitlebar()
+    {
+        var title = Ui.Label("SIR WORD-A-LOT", Ui.Ink);
+        var left = Ui.Row(12, new Glyph("word") { Width = 16, Height = 16 }, title);
+        left.Margin = new Thickness(16, 0);
+
+        var buttons = Ui.Row(0,
+            Ui.IconButton("minimize", "Minimize", () => WindowState = WindowState.Minimized),
+            Ui.IconButton("maximize", "Maximize / restore", ToggleMaximize),
+            Ui.IconButton("close", "Close", Close));
+
+        var bar = new Border
+        {
+            Height = 43,
+            Background = Ui.TitlebarActive,
+            BorderBrush = Ui.Line,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Child = Ui.Columns("*,Auto", left, buttons),
+        };
+
+        bar.PointerPressed += (_, e) =>
+        {
+            if (IsTitleButton(e.Source)) return;
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
+        };
+        bar.DoubleTapped += (_, e) =>
+        {
+            if (!IsTitleButton(e.Source)) ToggleMaximize();
+        };
+
+        return bar;
+
+        static bool IsTitleButton(object? source) =>
+            source is Visual visual && visual.GetSelfAndVisualAncestors().OfType<Button>().Any();
+    }
+
+    private void ToggleMaximize() =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    private Border BuildSidebar()
+    {
+        var panel = Ui.Stack(2);
+        panel.Margin = new Thickness(0, 22, 0, 18);
+
+        void Section(string caption)
+        {
+            var label = Ui.Label(caption);
+            label.Margin = new Thickness(18, 4, 18, 6);
+            panel.Children.Add(label);
+        }
+
+        void Divider()
+        {
+            var rule = Ui.Rule();
+            rule.Margin = new Thickness(18, 14, 18, 8);
+            panel.Children.Add(rule);
+        }
+
+        void Add(NavItem item)
+        {
+            var button = Ui.Button("", () => Navigate(item.Id), "nav");
+            button.Content = Ui.Row(11,
+                new Glyph(item.Glyph) { Width = 14, Height = 14 },
+                Ui.Text(TitleCase(item.Title), 12.5));
+            _navButtons[item.Id] = button;
+            panel.Children.Add(button);
+        }
+
+        Section("LIBRARY");
+        foreach (var item in Items[..5]) Add(item);
+
+        Divider();
+        foreach (var item in Items[5..10]) Add(item);
+
+        Divider();
+        foreach (var item in Items[10..]) Add(item);
+
+        return new Border
+        {
+            Width = 170,
+            Background = Ui.Sidebar,
+            BorderBrush = Ui.Line,
+            BorderThickness = new Thickness(0, 0, 1, 0),
+            Child = Ui.Scroll(panel),
+        };
+    }
+
+    private static string TitleCase(string caption) =>
+        caption.Length == 0 ? caption : char.ToUpperInvariant(caption[0]) + caption[1..].ToLowerInvariant();
+
+    private Border BuildFooter()
+    {
+        var grip = new Border
+        {
+            Width = 19,
+            Height = 19,
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.BottomRightCorner),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = "◢",
+                FontSize = 10,
+                Foreground = Ui.Muted,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+            },
+        };
+        grip.PointerPressed += (_, e) =>
+        {
+            if (WindowState == WindowState.Normal) BeginResizeDrag(WindowEdge.SouthEast, e);
+        };
+
+        var right = Ui.Row(14, _statusRight, grip);
+        right.HorizontalAlignment = HorizontalAlignment.Right;
+
+        return new Border
+        {
+            Height = 42,
+            BorderBrush = Ui.Line,
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Padding = new Thickness(18, 0),
+            Child = Ui.Columns("*,Auto", _statusLeft, right),
+        };
+    }
+
+    public void Navigate(string id, object? argument = null)
+    {
+        var item = Items.FirstOrDefault(i => i.Id == id) ?? Items[0];
+
+        if (!_views.TryGetValue(item.Id, out var view))
+        {
+            view = Build(item.Id);
+            _views[item.Id] = view;
+        }
+
+        if (argument is not null && view is IReceivesArgument receiver) receiver.Receive(argument);
+
+        Host.Content = view;
+        CurrentViewId = item.Id;
+        _statusLeft.Text = $"SWL / {item.Title}";
+
+        foreach (var (buttonId, button) in _navButtons)
+        {
+            button.Classes.Remove("selected");
+            if (buttonId == item.Id) button.Classes.Add("selected");
+        }
+
+        Motion.Enter(view, 8);
+        UpdateStatus();
+    }
+
+    private Control Build(string id) => id switch
+    {
+        "sentences" => new SentencesView(_context),
+        "lookup" => new LookupView(_context),
+        "quiz" => new QuizView(_context),
+        "decks" => new DecksView(_context),
+        "stats" => new StatsView(_context),
+        "console" => new ConsoleView(_context),
+        "settings" => new SettingsView(_context),
+        _ => new LibraryView(_context, id),
+    };
+
+    public void ShowToast(string message) => Shell.Toast.Show(_overlay, message);
+
+    private void UpdateStatus()
+    {
+        var summary = _context.Stats.Summary(DateTime.UtcNow);
+        var connectivity = _settings.LookupEnabled ? "ONLINE" : "LOOKUP OFF";
+        _statusRight.Text = $"{summary.TotalWords} WORDS  ·  {summary.DueToday} DUE  ·  {connectivity}";
+    }
+
+    private void CaptureWord(string word)
+    {
+        Activate();
+        _library.AddEntry(word, "capture");
+        ShowToast($"Captured '{word}'.");
+        Navigate("lookup", word);
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space && e.KeyModifiers == KeyModifiers.Control)
+        {
+            CommandPalette.Show(_overlay, _context, Items);
+            e.Handled = true;
+            return;
+        }
+
+        // A bare letter must never steal a keystroke from a field the user is
+        // typing into, so the guard is the focused element, not the hosted view.
+        if (e.KeyModifiers != KeyModifiers.None) return;
+        if (FocusManager?.GetFocusedElement() is TextBox or ComboBox) return;
+
+        switch (e.Key)
+        {
+            case Key.OemQuestion or Key.Divide:
+                Navigate("library");
+                (Host.Content as LibraryView)?.FocusSearch();
+                e.Handled = true;
+                break;
+            case Key.N:
+                Navigate("library");
+                (Host.Content as LibraryView)?.BeginNewWord();
+                e.Handled = true;
+                break;
+            case Key.Q:
+                Navigate("quiz");
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void RestoreBounds()
+    {
+        if (_settings.WindowBounds is not { } stored) return;
+        var parts = stored.Split(',');
+        if (parts.Length != 4) return;
+        if (!double.TryParse(parts[2], out var width) || !double.TryParse(parts[3], out var height)) return;
+
+        Width = Math.Max(MinWidth, width);
+        Height = Math.Max(MinHeight, height);
+
+        if (double.TryParse(parts[0], out var x) && double.TryParse(parts[1], out var y))
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Position = new PixelPoint((int)x, (int)y);
+        }
+    }
+
+    private void SaveBounds()
+    {
+        if (WindowState != WindowState.Normal) return;
+        _settings.WindowBounds = $"{Position.X},{Position.Y},{Width},{Height}";
+    }
+}

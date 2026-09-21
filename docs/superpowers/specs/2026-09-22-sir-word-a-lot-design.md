@@ -336,15 +336,21 @@ Familiar (7–29 d), Strong (30–89 d), Mastered (≥ 90 d).
 
 - **Flip** — headword in Georgia 44, then definition, part of speech,
   synonyms and one example. Self-graded.
-- **Choice** — prompt alternates between definition and headword; four
-  options, distractors preferring the same part of speech, then a shared tag,
-  then random. Correct grades Good, incorrect grades Again, with a Hard/Easy
-  override row after answering.
+- **Choice** — prompt is the definition; four options, distractors preferring
+  the same part of speech, then random. Correct suggests Good, incorrect
+  suggests Again.
 - **Cloze** — an example sentence with the word blanked to `▁` characters
   matching its length, using the stored cloze span or one computed by
-  `Cloze.cs`. Typed; edit distance ≤ 1 counts as correct and grades Hard.
-- **Typed** — definition shown, type the headword. Exact grades Good; edit
-  distance ≤ 2 shows `ALMOST` with a diff and grades Hard; otherwise Again.
+  `Cloze.cs`. Typed; edit distance ≤ 1 suggests Hard.
+- **Typed** — definition shown, type the headword. Exact suggests Good; edit
+  distance ≤ 2 suggests Hard; otherwise Again.
+
+**Auto-graded modes suggest, they do not record.** Answering a Choice, Cloze or
+Typed card reveals the answer with the computed grade preselected as the
+primary button, confirmed with `Enter` or a click. The review row is written on
+confirmation, not on submission. Recording before you have seen whether you
+were right would make the override meaningless, and the grade is a judgement
+about your memory that only you can make once the answer is in front of you.
 
 `Cloze.cs` matches inflected forms: `-s`, `-es`, `-ed`, `-ing`, `-d`,
 `-ied → y`, and final-consonant doubling.
