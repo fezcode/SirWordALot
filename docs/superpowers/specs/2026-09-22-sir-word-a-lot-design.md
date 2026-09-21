@@ -205,16 +205,20 @@ and the `◢` grip at the right.
 
 Three columns: sidebar, entry list, detail. The list has a search box
 (watermark `Search words and sentences…`), a sort control (recent, alphabetic,
-due, mastery), a collapsible filter row (part of speech, tag, mastery bucket,
-due state, date added) and a `+ Word` button. Rows show the headword in Inter
-13, part of speech in muted mono, and a thin mastery bar, separated by
-`#D8DECF` rules.
+due, mastery), a filter row (part of speech, tag, mastery bucket), a
+`Save as deck` action and a `+ Word` button. Due state and archived state come
+from the sidebar preset rather than the filter row, so the two cannot disagree.
+`SearchFilter` also carries `AddedAfter`, used by smart decks. Rows show the
+headword in Inter 13, part of speech in muted mono, and a thin mastery bar,
+separated by `#D8DECF` rules.
 
 ### Entry detail
 
 Eyebrow `ENTRY / 0X 4A 92` — a stable hex derived from the id — with
 `DUE IN 3 D · MASTERY 62%` at the right. Headword in Georgia 32. IPA and part
-of speech in muted mono with a `▸` button when `audio_url` is set. Then
+of speech in muted mono with a `▸` button when `audio_url` is set; the button
+hands the URL to the operating system's default handler rather than decoding
+audio in-process, and only `http`/`https` URLs are accepted. Then
 DEFINITION, SYNONYMS / ANTONYMS / RELATED as clickable chips, EXAMPLES with
 per-sentence edit, delete and set-cloze controls, TAGS, NOTES. Footer: Save,
 Star, Archive, Delete, Quiz this word.
@@ -248,7 +252,9 @@ automatically, and never block the UI thread.
 ### Quiz
 
 Mode picker (Flip, Choice, Cloze, Typed, Mixed) and scope picker (due queue,
-deck, tag, starred, all, free practice), then the card surface. Grade buttons
+deck, tag, starred, all, free practice), then the card surface. A seventh scope,
+a single word, is reachable only from an entry's `Quiz this word` button and
+from a deck's quiz action. Grade buttons
 show the interval each would produce (`2 d`, `6 d`). Session header shows
 `03 / 12`, elapsed time and streak. `Esc` ends with a summary card.
 
@@ -310,9 +316,10 @@ capped at 365 days. New cards per day default to 20.
 
 ### Leitner
 
-Five boxes at 1, 2, 4, 8 and 16 days. Correct promotes, incorrect returns to
-box 1. Switching scheduler in Settings seeds the other's fields from the
-current interval rather than resetting progress.
+Five boxes at 1, 2, 4, 8 and 16 days. `Again` returns the card to box 1, `Hard`
+holds it where it is, and `Good` and `Easy` promote it. Switching scheduler in
+Settings seeds the other's fields from the current interval and keeps the
+existing due date rather than resetting progress.
 
 ### Free practice
 
