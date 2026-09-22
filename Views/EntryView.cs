@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using SirWordALot.Core;
 using SirWordALot.Shell;
@@ -19,6 +20,7 @@ public sealed class EntryView : UserControl
     { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 74 };
     private readonly TextBox _notes = new()
     { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 60 };
+    private readonly TextBox _translation = new() { Watermark = "saygınlık, yücelik" };
 
     public Entry Entry { get; private set; }
 
@@ -47,6 +49,7 @@ public sealed class EntryView : UserControl
         _partOfSpeech.Text = Entry.PartOfSpeech ?? "";
         _definition.Text = Entry.Definition ?? "";
         _notes.Text = Entry.Notes ?? "";
+        _translation.Text = Entry.Translation ?? "";
 
         var due = scheduling.DueUtc <= DateTime.UtcNow
             ? "DUE NOW"
@@ -74,6 +77,7 @@ public sealed class EntryView : UserControl
             new Border(),
             Section("PART OF SPEECH", _partOfSpeech)));
         stack.Children.Add(Section("DEFINITION", _definition));
+        stack.Children.Add(TranslationSection());
 
         foreach (var kind in new[] { RelationKind.Synonym, RelationKind.Antonym, RelationKind.Related })
             stack.Children.Add(RelationSection(kind));
@@ -105,6 +109,33 @@ public sealed class EntryView : UserControl
 
     private static Control Section(string caption, Control control) => Ui.Stack(7, Ui.Label(caption), control);
 
+    /// <summary>The translation field, with a one-click fill from the offline
+    /// dictionary when it knows the word and the field is still empty.</summary>
+    private Control TranslationSection()
+    {
+        var offline = OfflineDictionary.Instance.Translate(Entry.Headword);
+
+        // The row is built once: _translation is a long-lived field, and adding it
+        // to a second Grid would re-parent it and throw.
+        Control trailing = new Border();
+
+        if (offline.Count > 0)
+        {
+            var suggestion = string.Join(", ", offline);
+            var fill = Ui.Button("Use atlas.dict", () =>
+            {
+                _context.Library.UpdateEntry(Entry with { Translation = suggestion });
+                _context.Toast("Translation filled from the offline dictionary.");
+                Render();
+            }, "outline");
+            fill.Margin = new Thickness(10, 0, 0, 0);
+            ToolTip.SetTip(fill, suggestion);
+            trailing = fill;
+        }
+
+        return Ui.Stack(7, Ui.Label("TRANSLATION"), Ui.Columns("*,Auto", _translation, trailing));
+    }
+
     private Control RelationSection(RelationKind kind)
     {
         var words = _context.Library.Relations(Entry.Id).Where(r => r.Kind == kind).ToList();
@@ -114,7 +145,12 @@ public sealed class EntryView : UserControl
             click: () => OpenOrOffer(relation.Word),
             remove: () => { _context.Library.RemoveRelation(Entry.Id, kind, relation.Word); Render(); })));
 
-        var box = new TextBox { Watermark = $"Add a {kind.ToColumn()}…", Width = 220 };
+        var box = new TextBox
+        {
+            Watermark = $"Add a {Singular(kind)}…",
+            Width = 220,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
         box.KeyDown += (_, e) =>
         {
             if (e.Key != Key.Enter) return;
@@ -124,8 +160,21 @@ public sealed class EntryView : UserControl
             Render();
         };
 
-        return Ui.Stack(8, Ui.Label(kind.ToColumn().ToUpperInvariant() + "S"), chips, box);
+        return Ui.Stack(8, Ui.Label(Plural(kind)), chips, box);
     }
+
+    /// <summary>"related" is already an adjective, so it takes no plural "s".</summary>
+    private static string Plural(RelationKind kind) => kind switch
+    {
+        RelationKind.Related => "RELATED WORDS",
+        RelationKind.Rhyme => "RHYMES",
+        RelationKind.Form => "FORMS",
+        RelationKind.Antonym => "ANTONYMS",
+        _ => "SYNONYMS",
+    };
+
+    private static string Singular(RelationKind kind) =>
+        kind == RelationKind.Related ? "related word" : kind.ToColumn();
 
     private void OpenOrOffer(string word)
     {
@@ -207,7 +256,7 @@ public sealed class EntryView : UserControl
         var chips = new WrapPanelHost(_context.Library.TagsFor(Entry.Id).Select(tag => Ui.Chip(
             tag, remove: () => { _context.Library.UntagEntry(Entry.Id, tag); Render(); })));
 
-        var box = new TextBox { Watermark = "Add a tag…", Width = 220 };
+        var box = new TextBox { Watermark = "Add a tag…", Width = 220, HorizontalAlignment = HorizontalAlignment.Left };
         box.KeyDown += (_, e) =>
         {
             if (e.Key != Key.Enter) return;
@@ -243,6 +292,7 @@ public sealed class EntryView : UserControl
             PartOfSpeech = Blank(_partOfSpeech.Text),
             Definition = Blank(_definition.Text),
             Notes = Blank(_notes.Text),
+            Translation = Blank(_translation.Text),
         });
 
         _context.Toast("Saved.");

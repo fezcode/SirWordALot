@@ -15,19 +15,18 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
     private readonly string _preset;
     private readonly StackPanel _list = Ui.Stack(0);
     private readonly TextBlock _count = Ui.Label("");
-    private readonly ComboBox _sort = new()
+    // Stretched rather than content-sized: two ragged columns of differently wide
+    // dropdowns is what made the filter row look accidental.
+    private readonly ComboBox _sort = FilterBox(new[] { "Recent", "Alphabetic", "Due", "Mastery" });
+    private readonly ComboBox _partOfSpeech = FilterBox(null);
+    private readonly ComboBox _tag = FilterBox(null);
+    private readonly ComboBox _mastery = FilterBox(MasteryChoices);
+
+    private static ComboBox FilterBox(IEnumerable<string>? items) => new()
     {
-        ItemsSource = new[] { "Recent", "Alphabetic", "Due", "Mastery" },
-        SelectedIndex = 0,
-        Width = 116,
-    };
-    private readonly ComboBox _partOfSpeech = new() { Width = 150 };
-    private readonly ComboBox _tag = new() { Width = 130 };
-    private readonly ComboBox _mastery = new()
-    {
-        ItemsSource = MasteryChoices,
-        SelectedIndex = 0,
-        Width = 130,
+        ItemsSource = items,
+        SelectedIndex = items is null ? -1 : 0,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
     private long? _selected;
@@ -57,19 +56,20 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
         _context = context;
         _preset = preset;
 
-        var toolbar = Ui.Columns("*,Auto,Auto,Auto",
-            SearchBox,
-            _sort,
-            Ui.Button("Save as deck", PromptForDeckName, "outline"),
-            Ui.Button("+ Word", NewWord, "primary"));
-        toolbar.Margin = new Thickness(16, 14, 16, 10);
+        // The list column is narrow, so the controls stack rather than competing for
+        // one row; a fixed-width toolbar here crushes the search box to nothing.
+        var saveAsDeck = Ui.Button("Save this filter as a deck", PromptForDeckName, "outline");
+        saveAsDeck.HorizontalAlignment = HorizontalAlignment.Stretch;
 
-        var filters = Ui.Row(8, _partOfSpeech, _tag, _mastery);
-        filters.Margin = new Thickness(16, 0, 16, 12);
+        var toolbar = Ui.Stack(8,
+            Ui.Columns("*,8,Auto", SearchBox, new Border(), Ui.Button("+ Word", NewWord, "primary")),
+            Ui.Columns("*,8,*", _sort, new Border(), _partOfSpeech),
+            Ui.Columns("*,8,*", _tag, new Border(), _mastery),
+            saveAsDeck);
+        toolbar.Margin = new Thickness(16, 16, 16, 14);
 
-        var listColumn = Ui.Rows("Auto,Auto,*,40",
+        var listColumn = Ui.Rows("Auto,*,40",
             toolbar,
-            filters,
             Ui.Scroll(_list),
             new Border
             {
@@ -87,7 +87,7 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
         };
 
         Detail.Content = Placeholder();
-        Content = Ui.Columns("340,*", listBorder, Detail);
+        Content = Ui.Columns("360,*", listBorder, Detail);
 
         SearchBox.TextChanged += (_, _) => Refresh();
         _sort.SelectionChanged += (_, _) => Refresh();

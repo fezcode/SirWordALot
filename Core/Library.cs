@@ -76,15 +76,15 @@ public sealed class Library : IDisposable
               headword = $headword, normalized = $normalized, pronunciation = $pronunciation,
               audio_url = $audio, part_of_speech = $pos, definition = $definition,
               notes = $notes, starred = $starred, archived = $archived,
-              modified_utc = $now
+              translation = $translation, modified_utc = $now
             WHERE id = $id
             """,
             ("$headword", entry.Headword.Trim()), ("$normalized", normalized),
             ("$pronunciation", entry.Pronunciation), ("$audio", entry.AudioUrl),
             ("$pos", entry.PartOfSpeech), ("$definition", entry.Definition),
             ("$notes", entry.Notes), ("$starred", entry.Starred ? 1 : 0),
-            ("$archived", entry.Archived ? 1 : 0), ("$now", Iso.Text(DateTime.UtcNow)),
-            ("$id", entry.Id));
+            ("$archived", entry.Archived ? 1 : 0), ("$translation", entry.Translation),
+            ("$now", Iso.Text(DateTime.UtcNow)), ("$id", entry.Id));
 
         Touch();
     }
@@ -109,10 +109,13 @@ public sealed class Library : IDisposable
     private const string EntrySelect =
         """
         SELECT id, headword, normalized, pronunciation, audio_url, part_of_speech,
-               definition, notes, starred, archived, source, created_utc, modified_utc
+               definition, notes, starred, archived, source, created_utc, modified_utc,
+               translation
         FROM entries
         """;
 
+    /// <summary>Shared by every query that projects the entry columns; the column
+    /// order above and in those queries must match this reader.</summary>
     internal static Entry ReadEntry(SqliteDataReader r) => new(
         r.GetInt64(0), r.GetString(1), r.GetString(2),
         r.IsDBNull(3) ? null : r.GetString(3),
@@ -121,7 +124,8 @@ public sealed class Library : IDisposable
         r.IsDBNull(6) ? null : r.GetString(6),
         r.IsDBNull(7) ? null : r.GetString(7),
         r.GetInt32(8) != 0, r.GetInt32(9) != 0, r.GetString(10),
-        Iso.Parse(r.GetString(11)), Iso.Parse(r.GetString(12)));
+        Iso.Parse(r.GetString(11)), Iso.Parse(r.GetString(12)),
+        r.IsDBNull(13) ? null : r.GetString(13));
 
     // ---- relations -----------------------------------------------------
 
@@ -318,7 +322,8 @@ public sealed class Library : IDisposable
     public IReadOnlyList<Entry> DeckEntries(long deckId) => _db.Query(
         """
         SELECT e.id, e.headword, e.normalized, e.pronunciation, e.audio_url, e.part_of_speech,
-               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc
+               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc,
+               e.translation
         FROM entries e
         JOIN deck_entries de ON de.entry_id = e.id
         WHERE de.deck_id = $deck
@@ -379,7 +384,8 @@ public sealed class Library : IDisposable
     public IReadOnlyList<Entry> DueEntries(DateTime nowUtc, int limit = int.MaxValue) => _db.Query(
         """
         SELECT e.id, e.headword, e.normalized, e.pronunciation, e.audio_url, e.part_of_speech,
-               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc
+               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc,
+               e.translation
         FROM entries e JOIN scheduling s ON s.entry_id = e.id
         WHERE e.archived = 0 AND s.last_reviewed_utc IS NOT NULL AND s.due_utc <= $now
         ORDER BY s.due_utc LIMIT $limit
@@ -389,7 +395,8 @@ public sealed class Library : IDisposable
     public IReadOnlyList<Entry> NewEntries(int limit) => _db.Query(
         """
         SELECT e.id, e.headword, e.normalized, e.pronunciation, e.audio_url, e.part_of_speech,
-               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc
+               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc,
+               e.translation
         FROM entries e JOIN scheduling s ON s.entry_id = e.id
         WHERE e.archived = 0 AND s.last_reviewed_utc IS NULL
         ORDER BY e.created_utc, e.id LIMIT $limit
@@ -402,7 +409,8 @@ public sealed class Library : IDisposable
     public IReadOnlyList<Entry> EntriesWithTag(string tag) => _db.Query(
         """
         SELECT e.id, e.headword, e.normalized, e.pronunciation, e.audio_url, e.part_of_speech,
-               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc
+               e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc,
+               e.translation
         FROM entries e
         JOIN entry_tags et ON et.entry_id = e.id
         JOIN tags t ON t.id = et.tag_id

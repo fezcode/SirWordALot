@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 using SirWordALot.Core;
 using SirWordALot.Shell;
@@ -15,7 +16,7 @@ public sealed class SentencesView : UserControl, IDisposable
     {
         ItemsSource = new[] { "All sentences", "Loose only", "Linked only" },
         SelectedIndex = 0,
-        Width = 150,
+        Width = 168,
     };
     private readonly ContentControl _panel = new();
     private readonly Control _listContent;
@@ -27,9 +28,18 @@ public sealed class SentencesView : UserControl, IDisposable
     {
         _context = context;
 
-        var toolbar = Ui.Columns("*,Auto,Auto",
-            SearchBox, _scope, Ui.Button("+ Sentence", ShowAddForm, "primary"));
-        toolbar.Margin = new Thickness(26, 22, 26, 14);
+        // The search box is capped so it does not run the full width of a wide
+        // window while the two controls beside it stay small.
+        SearchBox.MaxWidth = 520;
+        SearchBox.HorizontalAlignment = HorizontalAlignment.Left;
+
+        var toolbar = Ui.Columns("*,10,Auto,10,Auto",
+            SearchBox,
+            new Border(),
+            _scope,
+            new Border(),
+            Ui.Button("+ Sentence", ShowAddForm, "primary"));
+        toolbar.Margin = new Thickness(26, 22, 26, 16);
 
         var header = Ui.Columns("*,210,130", Ui.Label("SENTENCE"), Ui.Label("WORD"), Ui.Label("SOURCE"));
         header.Margin = new Thickness(26, 0, 26, 10);

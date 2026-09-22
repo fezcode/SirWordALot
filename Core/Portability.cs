@@ -42,7 +42,7 @@ public static class Portability
     public sealed record EntryDto(
         string Headword, string? Pronunciation, string? AudioUrl, string? PartOfSpeech,
         string? Definition, string? Notes, bool Starred, bool Archived, string Source,
-        string CreatedUtc, List<string>? Tags, Dictionary<string, List<string>>? Relations,
+        string CreatedUtc, string? Translation, List<string>? Tags, Dictionary<string, List<string>>? Relations,
         List<SentenceDto>? Sentences, SchedulingDto? Scheduling, List<ReviewDto>? Reviews);
 
     public sealed record DeckDto(string Name, string? Description, string? FilterJson, List<string>? Entries);
@@ -64,7 +64,7 @@ public static class Portability
             return new EntryDto(
                 entry.Headword, entry.Pronunciation, entry.AudioUrl, entry.PartOfSpeech,
                 entry.Definition, entry.Notes, entry.Starred, entry.Archived, entry.Source,
-                Iso.Text(entry.CreatedUtc),
+                Iso.Text(entry.CreatedUtc), entry.Translation,
                 library.TagsFor(entry.Id).ToList(),
                 relations,
                 library.SentencesFor(entry.Id).Select(ToDto).ToList(),
@@ -138,6 +138,7 @@ public static class Portability
                 Notes = dto.Notes,
                 Starred = dto.Starred,
                 Archived = dto.Archived,
+                Translation = dto.Translation,
             });
 
             foreach (var tag in dto.Tags ?? []) library.TagEntry(id, tag);

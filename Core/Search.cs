@@ -102,6 +102,7 @@ public sealed class Search(Db db)
         var sql = $"""
             SELECT e.id, e.headword, e.normalized, e.pronunciation, e.audio_url, e.part_of_speech,
                    e.definition, e.notes, e.starred, e.archived, e.source, e.created_utc, e.modified_utc,
+                   e.translation,
                    s.interval_days, s.due_utc,
                    (SELECT COUNT(*) FROM reviews r WHERE r.entry_id = e.id),
                    (SELECT COUNT(*) FROM reviews r WHERE r.entry_id = e.id AND r.correct = 1)
@@ -112,11 +113,12 @@ public sealed class Search(Db db)
 
         var hits = db.Query(sql, r =>
         {
+            // Library.ReadEntry consumes columns 0-13; the aggregates follow it.
             var entry = Library.ReadEntry(r);
-            var interval = r.GetInt32(13);
-            var due = Iso.Parse(r.GetString(14));
-            var total = r.GetInt32(15);
-            var correct = r.GetInt32(16);
+            var interval = r.GetInt32(14);
+            var due = Iso.Parse(r.GetString(15));
+            var total = r.GetInt32(16);
+            var correct = r.GetInt32(17);
             return new SearchHit(
                 entry,
                 Core.Mastery.Percent(interval, correct, total),

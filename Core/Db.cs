@@ -5,7 +5,7 @@ namespace SirWordALot.Core;
 /// <summary>Owns the SQLite connection, the schema, and forward migrations.</summary>
 public sealed class Db : IDisposable
 {
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
 
     public SqliteConnection Connection { get; }
 
@@ -94,16 +94,19 @@ public sealed class Db : IDisposable
 
     private void Migrate()
     {
-        if (UserVersion >= SchemaVersion) return;
+        var from = UserVersion;
+        if (from >= SchemaVersion) return;
+
         Begin();
-        if (UserVersion < 1) ApplyV1();
+        if (from < 1) Apply(SchemaV1);
+        if (from < 2) Apply(SchemaV2);
         Execute($"PRAGMA user_version = {SchemaVersion}");
         Commit();
     }
 
-    private void ApplyV1()
+    private void Apply(string schema)
     {
-        foreach (var statement in SchemaV1.Split(";--", StringSplitOptions.RemoveEmptyEntries))
+        foreach (var statement in schema.Split(";--", StringSplitOptions.RemoveEmptyEntries))
             if (!string.IsNullOrWhiteSpace(statement)) Execute(statement);
     }
 
@@ -230,5 +233,12 @@ public sealed class Db : IDisposable
           VALUES ('delete', old.id, old.text, old.source);
           INSERT INTO sentences_fts(rowid, text, source) VALUES (new.id, new.text, new.source);
         END;
+        """;
+
+    /// <summary>v2 adds the translation carried by the offline dictionary, which is a
+    /// meaning in another language rather than an English definition and so deserves
+    /// its own column instead of being folded into one.</summary>
+    private const string SchemaV2 = """
+        ALTER TABLE entries ADD COLUMN translation TEXT;
         """;
 }

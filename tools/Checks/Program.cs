@@ -131,7 +131,8 @@ internal static class Program
         Expect("sidebar width", 170d, window.SidebarPanel.Width);
         Expect("sidebar colour", "#FFDFE4D6", Hex(window.SidebarPanel.Background!));
         Expect("footer height", 42d, window.Footer.Height);
-        Expect("nav items", 12, window.Nav.Count);
+        Expect("nav items", 11, window.Nav.Count);
+        Expect("no console view", false, window.Nav.Any(i => i.Id == "console"));
         Expect("starts on library", "library", window.CurrentViewId);
 
         foreach (var item in window.Nav)

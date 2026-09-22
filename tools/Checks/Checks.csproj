@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Core/**/*.cs" LinkBase="Core" />
+    <EmbeddedResource Include="../../Assets/dictionary.json.gz"
+                      LogicalName="SirWordALot.Assets.dictionary.json.gz" />
     <Compile Include="../../Shell/**/*.cs" LinkBase="Shell" />
     <Compile Include="../../Views/**/*.cs" LinkBase="Views" />
   </ItemGroup>

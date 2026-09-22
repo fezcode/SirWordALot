@@ -21,7 +21,10 @@ public sealed record Entry(
     bool Archived,
     string Source,
     DateTime CreatedUtc,
-    DateTime ModifiedUtc);
+    DateTime ModifiedUtc,
+    /// <summary>A meaning in another language, from the offline dictionary. Kept
+    /// apart from <paramref name="Definition"/>, which is English.</summary>
+    string? Translation = null);
 
 public sealed record Relation(long Id, long EntryId, RelationKind Kind, string Word, string? Source);
 

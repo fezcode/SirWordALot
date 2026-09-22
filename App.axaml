@@ -17,11 +17,15 @@
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="Foreground" Value="#183C40"/>
     </Style>
+    <!-- Every inline control shares one height so a toolbar row reads as a row
+         rather than as three controls that happen to sit near each other. -->
     <Style Selector="Button">
       <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#183C40"/>
       <Setter Property="CornerRadius" Value="0"/><Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Padding" Value="12,8"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Padding" Value="14,0"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="MinHeight" Value="36"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="#D4DED6"/><Setter Property="Foreground" Value="#123A3F"/>
@@ -31,7 +35,13 @@
     </Style>
     <Style Selector="Button.primary">
       <Setter Property="Background" Value="#214B4D"/><Setter Property="Foreground" Value="#F0F0DF"/>
-      <Setter Property="Padding" Value="18,11"/>
+      <Setter Property="Padding" Value="20,0"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2C5C5D"/><Setter Property="Foreground" Value="#F0F0DF"/>
+    </Style>
+    <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1A3C3E"/><Setter Property="Foreground" Value="#F0F0DF"/>
     </Style>
     <Style Selector="Button.outline">
       <Setter Property="BorderBrush" Value="#AABBB2"/><Setter Property="BorderThickness" Value="1"/>
@@ -51,7 +61,12 @@
     <Style Selector="TextBox">
       <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
       <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="Foreground" Value="#183C40"/>
-      <Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="10,8"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="10,7"/>
+      <Setter Property="MinHeight" Value="36"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="#8FA79B"/>
     </Style>
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
       <Setter Property="BorderBrush" Value="#406E65"/><Setter Property="BorderThickness" Value="1"/>
@@ -64,11 +79,56 @@
     <Style Selector="TextBox.terminal:focus /template/ Border#PART_BorderElement">
       <Setter Property="Background" Value="#102E34"/><Setter Property="BorderThickness" Value="0"/>
     </Style>
+    <!-- Fluent's own dropdown is white with a blue accent, which reads as a
+         different application entirely. Everything below repaints it. -->
     <Style Selector="ComboBox">
       <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
       <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="#183C40"/><Setter Property="MinHeight" Value="36"/>
+      <Setter Property="Padding" Value="10,0"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="PlaceholderForeground" Value="#81998F"/>
     </Style>
-    <Style Selector="CheckBox"><Setter Property="Foreground" Value="#183C40"/></Style>
+    <Style Selector="ComboBox /template/ Border#Background">
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Background" Value="#F5F3E8"/>
+      <Setter Property="BorderBrush" Value="#AFBEB5"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="ComboBox:pointerover /template/ Border#Background">
+      <Setter Property="Background" Value="#EFEFE2"/><Setter Property="BorderBrush" Value="#8FA79B"/>
+    </Style>
+    <Style Selector="ComboBox:pressed /template/ Border#Background">
+      <Setter Property="Background" Value="#E6E7D9"/><Setter Property="BorderBrush" Value="#8FA79B"/>
+    </Style>
+    <Style Selector="ComboBox:focus /template/ Border#Background">
+      <Setter Property="BorderBrush" Value="#406E65"/>
+    </Style>
+    <Style Selector="ComboBox /template/ Border#PopupBorder">
+      <Setter Property="Background" Value="#ECEDE0"/>
+      <Setter Property="BorderBrush" Value="#9CAEA0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="ComboBox /template/ PathIcon#DropDownGlyph">
+      <Setter Property="Foreground" Value="#688178"/>
+    </Style>
+    <Style Selector="ComboBoxItem">
+      <Setter Property="CornerRadius" Value="0"/><Setter Property="Foreground" Value="#183C40"/>
+      <Setter Property="Padding" Value="12,9"/><Setter Property="MinHeight" Value="0"/>
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#D4DED6"/><Setter Property="Foreground" Value="#123A3F"/>
+    </Style>
+    <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="#CBD7C9"/><Setter Property="Foreground" Value="#123A3F"/>
+    </Style>
+    <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#B9C9BA"/><Setter Property="Foreground" Value="#123A3F"/>
+    </Style>
+    <Style Selector="CheckBox">
+      <Setter Property="Foreground" Value="#183C40"/><Setter Property="MinHeight" Value="0"/>
+    </Style>
     <Style Selector="ToolTip">
       <Setter Property="Background" Value="#193C40"/><Setter Property="Foreground" Value="#F0F0DF"/>
       <Setter Property="CornerRadius" Value="0"/>

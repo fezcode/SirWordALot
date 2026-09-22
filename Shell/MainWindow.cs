@@ -43,7 +43,6 @@ public sealed class MainWindow : Window
         new("quiz", "QUIZ", "refinement"),
         new("decks", "DECKS", "deck"),
         new("stats", "STATS", "stats"),
-        new("console", "CONSOLE", "terminal"),
         new("settings", "SETTINGS", "settings"),
     ];
 
@@ -210,6 +209,9 @@ public sealed class MainWindow : Window
         Divider();
         foreach (var item in Items[10..]) Add(item);
 
+        // Items[10..] is Settings alone once the console is gone; the split is kept
+        // so adding a tool later does not need the sidebar restructured.
+
         return new Border
         {
             Width = 170,
@@ -293,7 +295,6 @@ public sealed class MainWindow : Window
         "quiz" => new QuizView(_context),
         "decks" => new DecksView(_context),
         "stats" => new StatsView(_context),
-        "console" => new ConsoleView(_context),
         "settings" => new SettingsView(_context),
         _ => new LibraryView(_context, id),
     };

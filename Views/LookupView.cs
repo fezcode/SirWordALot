@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using SirWordALot.Core;
@@ -89,18 +90,47 @@ public sealed class LookupView : UserControl, IReceivesArgument
 
         if (Result is not { } result) { _body.Content = Idle(); return; }
 
+        var translations = OfflineDictionary.Instance.Translate(result.Word);
+
         if (!result.Online)
         {
-            _body.Content = Ui.Stack(16,
-                Ui.Label("LOOKUP UNAVAILABLE  ·  OFFLINE"),
-                Ui.Display(result.Word, 26),
-                Ui.Text(result.Message ?? "No connection.", 13, Ui.Muted),
-                Ui.Row(12, Ui.Button("Add by hand", () =>
-                {
-                    var id = _context.Library.AddEntry(result.Word);
-                    _context.Toast("Word added. Fill it in yourself.");
-                    _context.Navigate("library", id);
-                }, "primary")));
+            // Offline is not the same as empty: the bundled atlas.dict data still
+            // answers 31,000 headwords without a network.
+            var offlinePanel = Ui.Stack(16,
+                Ui.Label(translations.Count > 0
+                    ? "OFFLINE  ·  ATLAS.DICT"
+                    : "LOOKUP UNAVAILABLE  ·  OFFLINE"),
+                Ui.Display(result.Word, 26));
+
+            if (translations.Count > 0)
+            {
+                offlinePanel.Children.Add(Ui.Stack(8,
+                    Ui.Label("TURKISH"),
+                    new WrapPanelHost(translations.Select(t => Ui.Chip(t)))));
+                offlinePanel.Children.Add(Ui.Text(
+                    "English senses and synonyms need a connection; the translation does not.",
+                    12, Ui.Muted));
+            }
+            else
+            {
+                offlinePanel.Children.Add(Ui.Text(result.Message ?? "No connection.", 13, Ui.Muted));
+                offlinePanel.Children.Add(SuggestionRow(result.Word));
+            }
+
+            offlinePanel.Children.Add(Ui.Row(12, Ui.Button("Add to library", () =>
+            {
+                var id = _context.Library.AddEntry(result.Word);
+                if (translations.Count > 0)
+                    _context.Library.UpdateEntry(_context.Library.GetEntry(id)! with
+                    { Translation = string.Join(", ", translations) });
+
+                _context.Toast(translations.Count > 0
+                    ? "Word added with its translation."
+                    : "Word added. Fill it in yourself.");
+                _context.Navigate("library", id);
+            }, "primary")));
+
+            _body.Content = offlinePanel;
             return;
         }
 
@@ -118,6 +148,11 @@ public sealed class LookupView : UserControl, IReceivesArgument
                         if (!Launch.Url(result.AudioUrl)) _context.Toast("Could not open the pronunciation.");
                     }, "outline")),
             Ui.Rule());
+
+        if (translations.Count > 0)
+            stack.Children.Add(Ui.Stack(8,
+                Ui.Columns("Auto,*", Ui.Label("TURKISH"), Ui.Label("  ·  ATLAS.DICT, OFFLINE")),
+                new WrapPanelHost(translations.Select(t => Ui.Chip(t)))));
 
         foreach (var kind in new[]
                  { RelationKind.Synonym, RelationKind.Antonym, RelationKind.Related, RelationKind.Rhyme })
@@ -227,10 +262,38 @@ public sealed class LookupView : UserControl, IReceivesArgument
         return id;
     }
 
-    private Control Idle() => Ui.Stack(12,
-        Ui.Label("LOOKUP"),
-        Ui.Display("Find a word.", 26),
-        Ui.Text(_context.Settings.LookupEnabled
-            ? "Synonyms and antonyms come from Datamuse; senses and examples from dictionaryapi.dev. Nothing else leaves this machine."
-            : "Lookup is switched off in Settings. Words can still be added by hand.", 12, Ui.Muted));
+    /// <summary>Offers near-matches from the offline headword list when a word was
+    /// not found, which usually means a typo.</summary>
+    private Control SuggestionRow(string word)
+    {
+        var suggestions = OfflineDictionary.Instance.Suggest(word, 8);
+        if (suggestions.Count == 0) return new Border();
+
+        return Ui.Stack(8,
+            Ui.Label("DID YOU MEAN"),
+            new WrapPanelHost(suggestions.Select(s => Ui.Chip(s, click: () =>
+            {
+                QueryBox.Text = s;
+                _ = RunAsync(s);
+            }))));
+    }
+
+    private Control Idle()
+    {
+        var dictionary = OfflineDictionary.Instance;
+
+        var stack = Ui.Stack(12,
+            Ui.Label("LOOKUP"),
+            Ui.Display("Find a word.", 26),
+            Ui.Text(_context.Settings.LookupEnabled
+                ? "Synonyms and antonyms come from Datamuse; senses and examples from dictionaryapi.dev. Nothing else leaves this machine."
+                : "Lookup is switched off in Settings. Words can still be added by hand.", 12, Ui.Muted));
+
+        if (dictionary.IsAvailable)
+            stack.Children.Add(Ui.Text(
+                $"{dictionary.Count:N0} English headwords with Turkish meanings are bundled from atlas.dict " +
+                "and answer with no connection at all.", 12, Ui.Muted));
+
+        return stack;
+    }
 }

@@ -8,10 +8,15 @@
     <Version>0.1.0</Version>
     <Company>Fezcode</Company>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/SirWordALot.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tools/**;tests/**" />
-    <AvaloniaResource Include="Assets/**" />
+    <AvaloniaResource Include="Assets/**" Exclude="Assets/dictionary.json.gz" />
+    <!-- The offline dictionary exported from atlas.dict. Embedded rather than
+         copied beside the exe so the single-file build carries it. -->
+    <EmbeddedResource Include="Assets/dictionary.json.gz"
+                      LogicalName="SirWordALot.Assets.dictionary.json.gz" />
     <PackageReference Include="Avalonia" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.0" />
