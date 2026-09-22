@@ -105,7 +105,15 @@ steps in order and stop and report any failure before proceeding:
 
 ## Build and installer maintenance
 
-- Keep `forge.toml` on the Mica wizard theme, using the app's icon and identity.
+- Keep `forge.toml` on the `huh` wizard theme, using the app's icon and identity.
+  It is the only shipped theme that asks the engine for a real Mica backdrop,
+  and it lays the steps out as a rail. Step titles double as that rail's
+  labels, so keep them to one word where possible and let the bodies carry the
+  version; the rail heads itself with the app name and version already.
+- Forge embeds its themes with `go:embed`, so editing a theme without running
+  `gobake build` in Forge silently packages the previous one. `installer.ps1`
+  fails when `forge.exe` is older than anything under Forge's `themes/`,
+  `cmd/` or `internal/`.
 - Preserve user data under `%APPDATA%/fezcode/SirWordALot` unless the user
   chooses the installer's option to remove settings and data. That directory
   holds `library.db` and the rolling JSON backups, and losing it loses

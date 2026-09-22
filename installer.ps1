@@ -102,9 +102,21 @@ Write-Host "  payload ok: no symbols, shortcut icons resolve" -ForegroundColor D
 Write-Host "`n[3/4] Ensuring a GUI-subsystem forge.exe..." -ForegroundColor Cyan
 if (-not (Test-Path $forgeGui))    { throw "Missing $forgeGui. Run 'gobake build' in $forgeRoot first." }
 if (-not (Test-Path $uninstaller)) { throw "Missing $uninstaller. Run 'gobake build' in $forgeRoot first." }
+
+# Themes are go:embed-ed into forge.exe, so editing a theme and not rebuilding
+# Forge silently packages the previous one. Check the theme tree, not just the
+# Go sources.
+$forgeStamp = (Get-Item $forgeGui).LastWriteTime
+$newest = Get-ChildItem (Join-Path $forgeRoot 'themes'), (Join-Path $forgeRoot 'cmd'), (Join-Path $forgeRoot 'internal') `
+    -Recurse -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($newest -and $newest.LastWriteTime -gt $forgeStamp) {
+    throw "forge.exe ($($forgeStamp.ToString('u'))) is older than $($newest.Name) ($($newest.LastWriteTime.ToString('u'))). Run 'gobake build' in $forgeRoot so the current themes are embedded."
+}
+
 Assert-GuiExecutable $forgeGui
 Assert-GuiExecutable $uninstaller
 Write-Host "  using: $forgeGui" -ForegroundColor DarkGray
+Write-Host "  theme: $($manifest -replace '(?s).*?theme\s*=\s*"([^"]+)".*', '$1')" -ForegroundColor DarkGray
 
 Write-Host "`n[4/4] Building Setup.exe..." -ForegroundColor Cyan
 

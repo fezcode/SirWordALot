@@ -9,7 +9,10 @@ publisher = "Samil Bulbul"
 comments  = "Vocabulary and thesaurus trainer with spaced repetition"
 
 [ui]
-theme        = "mica"
+# huh is the only shipped theme that asks the engine for a real Mica backdrop,
+# so the wizard picks up the desktop tint behind it instead of painting its own
+# ground. It lays the steps out as a rail down the left.
+theme        = "huh"
 window_title = "Sir Word-a-lot Setup"
 
 [install]
@@ -21,35 +24,38 @@ default_dir = "${LOCALAPPDATA}/Programs/SirWordALot"
 [uninstall]
 settings_dirs = ["${APPDATA}/fezcode/SirWordALot"]
 
+# Step titles double as the labels in huh's left rail, so they are short. The
+# rail already heads itself with "SIR WORD-A-LOT 0.1.1", and each body carries
+# the version where it matters; version.ps1 rewrites those.
 [[steps]]
 type  = "welcome"
-title = "Sir Word-a-lot 0.1.1"
+title = "Welcome"
 body  = "This wizard will install Sir Word-a-lot 0.1.1 on your computer.\n\nSir Word-a-lot is a vocabulary and thesaurus trainer: capture a word with the sentence you met it in, enrich it with real synonyms and examples, then meet it again on a schedule until it sticks.\n\nClick Next to continue."
 
 [[steps]]
 type  = "license"
-title = "License Agreement"
+title = "License"
 body  = "Please review the license terms below before continuing the installation."
 file  = "LICENSE.txt"
 
 [[steps]]
 type  = "folder"
-title = "Select Folder"
+title = "Location"
 body  = "Choose where to install Sir Word-a-lot 0.1.1."
 
 [[steps]]
 type  = "shortcuts"
-title = "Select Optional Tasks"
+title = "Shortcuts"
 body  = "Check the items you would like the installer to perform."
 
 [[steps]]
 type  = "install"
-title = "Installing..."
+title = "Installing"
 body  = "Copying files to your system."
 
 [[steps]]
 type  = "finish"
-title = "Installation Complete"
+title = "Finished"
 body  = "Sir Word-a-lot has been installed successfully.\n\nYour library starts with sixty words, already due. Press Q for a quiz, or Ctrl+Space to go anywhere.\n\nClick Finish to close the installer."
 
 [[steps.launches]]
