@@ -1,0 +1,102 @@
+[app]
+name    = "Sir Word-a-lot"
+version = "0.1.0"
+id      = "io.fezcode.sirwordalot"
+icon    = "Assets/SirWordALot.ico"
+
+[meta]
+publisher = "Samil Bulbul"
+comments  = "Vocabulary and thesaurus trainer with spaced repetition"
+
+[ui]
+theme        = "mica"
+window_title = "Sir Word-a-lot Setup"
+
+[install]
+default_dir = "${LOCALAPPDATA}/Programs/SirWordALot"
+
+# Everything under ${INSTALLDIR} is app payload and goes on uninstall. The library
+# itself — library.db and its backups — lives in %APPDATA%\fezcode\SirWordALot and
+# is only removed when the user ticks "Also remove my settings and data".
+[uninstall]
+settings_dirs = ["${APPDATA}/fezcode/SirWordALot"]
+
+[[steps]]
+type  = "welcome"
+title = "Sir Word-a-lot 0.1.0"
+body  = "This wizard will install Sir Word-a-lot 0.1.0 on your computer.\n\nSir Word-a-lot is a vocabulary and thesaurus trainer: capture a word with the sentence you met it in, enrich it with real synonyms and examples, then meet it again on a schedule until it sticks.\n\nClick Next to continue."
+
+[[steps]]
+type  = "license"
+title = "License Agreement"
+body  = "Please review the license terms below before continuing the installation."
+file  = "LICENSE.txt"
+
+[[steps]]
+type  = "folder"
+title = "Select Folder"
+body  = "Choose where to install Sir Word-a-lot 0.1.0."
+
+[[steps]]
+type  = "shortcuts"
+title = "Select Optional Tasks"
+body  = "Check the items you would like the installer to perform."
+
+[[steps]]
+type  = "install"
+title = "Installing..."
+body  = "Copying files to your system."
+
+[[steps]]
+type  = "finish"
+title = "Installation Complete"
+body  = "Sir Word-a-lot has been installed successfully.\n\nYour library starts with sixty words, already due. Press Q for a quiz, or Ctrl+Space to go anywhere.\n\nClick Finish to close the installer."
+
+[[steps.launches]]
+kind    = "app"
+target  = "${INSTALLDIR}/SirWordALot.exe"
+label   = "Run Sir Word-a-lot after install"
+checked = true
+
+[[dirs]]
+# installer.ps1 supports win-x64 only; keep this aligned with that payload.
+src = "dist/SirWordALot"
+dst = "${INSTALLDIR}"
+
+[[files]]
+src = "LICENSE.txt"
+dst = "${INSTALLDIR}/LICENSE.txt"
+
+[[files]]
+src = "Assets/SirWordALot.ico"
+dst = "${INSTALLDIR}/app.ico"
+
+[[shortcuts]]
+target   = "${INSTALLDIR}/SirWordALot.exe"
+location = "${DESKTOP}/Sir Word-a-lot.lnk"
+name     = "Sir Word-a-lot"
+icon     = "${INSTALLDIR}/app.ico"
+label    = "Create Desktop Shortcut"
+optional = true
+default  = true
+
+[[shortcuts]]
+target   = "${INSTALLDIR}/SirWordALot.exe"
+location = "${STARTMENU}/Sir Word-a-lot/Sir Word-a-lot.lnk"
+name     = "Sir Word-a-lot"
+icon     = "${INSTALLDIR}/app.ico"
+label    = "Create Start Menu Entry"
+optional = true
+default  = true
+
+[[registry]]
+hive  = "HKCU"
+key   = "Software\\fezcode\\SirWordALot"
+value = "InstallDir"
+data  = "${INSTALLDIR}"
+
+[[registry]]
+hive  = "HKCU"
+key   = "Software\\fezcode\\SirWordALot"
+value = "Version"
+data  = "0.1.0"

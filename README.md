@@ -1,39 +1,54 @@
-# Sir Word-a-lot
+<div align="center">
 
 ![Sir Word-a-lot](Assets/banner.png)
 
-A vocabulary and thesaurus trainer in the visual idiom of **HammerOS**: cream
-institutional chrome, petrol surfaces, phosphor typography, and an unreasonably
-formal tone about the business of remembering words.
+**A vocabulary and thesaurus trainer for Windows, in the visual idiom of HammerOS.**
 
-Capture a word with the sentence you met it in, enrich it with real synonyms and
-examples, then meet it again on a schedule until it sticks. Clicking a synonym
-you do not own yet offers to add it, so one word fans out into a network.
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-1A3C3E?style=flat-square)](#install)
+[![.NET](https://img.shields.io/badge/.NET-10-1A3C3E?style=flat-square)](#build-from-source)
+[![Avalonia](https://img.shields.io/badge/Avalonia-11.3-1A3C3E?style=flat-square)](#build-from-source)
+[![Tests](https://img.shields.io/badge/verifications-460-4E8A7B?style=flat-square)](#verification)
+[![License](https://img.shields.io/badge/license-MIT-4E8A7B?style=flat-square)](LICENSE.txt)
 
-## Run
+</div>
 
-Open `dist/SirWordALot/SirWordALot.exe`. The published Windows x64 build is
-self-contained; keep the executable wherever you prefer.
+---
 
-From source, with the .NET 10 SDK:
+Meet a word. Keep the sentence you met it in. Meet it again on a schedule until
+it stays. Clicking a synonym you do not own yet offers to add it, so one word
+fans out into a network rather than sitting alone on a list.
 
-```powershell
-dotnet run --project SirWordALot.csproj
-```
+Cream institutional chrome, petrol surfaces, phosphor typography, and an
+unreasonably formal tone about the business of remembering words.
 
-`--help` and `--version` print to the console and exit.
+## Install
 
-## Inside
+Download `SirWordALot-Setup-<version>.exe` from
+[Releases](../../releases) and run it. The build is self-contained; there is no
+runtime to install first.
+
+Your library starts with sixty words, already due. Press `Q` for a quiz, or
+`Ctrl+Space` to go anywhere.
+
+## What is inside
 
 | View | What it does |
 | --- | --- |
-| **Library** | Search, filter and sort every word; edit headword, pronunciation, part of speech, definition, relations, sentences, tags and notes |
-| **Sentences** | The sentence bank. Paste a sentence and it links itself to any word it contains, inflections included — `obfuscates` finds `obfuscate` |
-| **Lookup** | Synonyms, antonyms, related words and rhymes from Datamuse; senses, pronunciation, audio and real examples from dictionaryapi.dev. Tick exactly what you want and add it. Turkish meanings come from the bundled offline dictionary and need no connection |
-| **Quiz** | Flip, multiple choice, cloze and typed drills over SM-2 or Leitner, with the resulting interval printed on every grade button |
-| **Decks** | Manual decks, plus smart decks saved from a library filter and re-evaluated live |
-| **Stats** | Streak, retention, a 53-week review heatmap, mastery breakdown and a retention curve |
-| **Settings** | Palette, motion, scheduler, daily caps, capture hotkey, lookup switch, export, import and restore |
+| **Library** | Search, filter and sort every word. Edit headword, pronunciation, part of speech, definition, translation, relations, sentences, tags and notes. |
+| **Sentences** | The sentence bank. Paste a sentence and it links itself to any word it contains, inflections included, so `obfuscates` finds `obfuscate`. |
+| **Lookup** | Synonyms, antonyms, related words and rhymes from Datamuse; senses, pronunciation, audio and real examples from dictionaryapi.dev. Tick exactly what you want and add it. Turkish meanings come from the bundled dictionary and need no connection at all. |
+| **Quiz** | Flip, multiple choice, cloze and typed drills over SM-2 or Leitner, with the resulting interval printed on every grade button. |
+| **Decks** | Manual decks, plus smart decks saved from a library filter and re-evaluated live. |
+| **Stats** | Streak, retention, a 53-week review heatmap, mastery breakdown and a retention curve. |
+| **Settings** | Palette, motion, scheduler, daily caps, capture hotkey, lookup switch, export, import and restore. |
+
+<div align="center">
+
+![The library and entry detail](docs/screenshot-entry.png)
+
+</div>
+
+## Keys
 
 | Shortcut | Action |
 | --- | --- |
@@ -44,19 +59,23 @@ dotnet run --project SirWordALot.csproj
 | `Q` | Start a quiz |
 | `Space` | Flip the card |
 | `Enter` | Confirm the suggested grade |
-| `1`–`4` | Grade Again, Hard, Good, Easy |
+| `1` – `4` | Grade Again, Hard, Good, Easy |
 | `Esc` | Back, or end the session |
 
 ## Scheduling
 
-SM-2 by default. Ease starts at 2.5 and floors at 1.3. `Good` gives 1 day, then
-6, then the interval times the ease. `Easy` adds 30% and raises the ease. `Hard`
-stretches by 20% and lowers it. `Again` resets the count, records a lapse and
-returns the card later in the same session. Intervals above two days get ±5%
-fuzz so cards do not clump, and are capped at a year.
+SM-2 by default. Ease starts at 2.5 and floors at 1.3.
 
-Leitner is available in Settings — five boxes at 1, 2, 4, 8 and 16 days, where
-`Again` returns to box 1, `Hard` holds and `Good`/`Easy` promote. Switching
+| Grade | Interval | Ease |
+| --- | --- | --- |
+| Again | back to now, requeued this session, lapse recorded | −0.20 |
+| Hard | current interval × 1.2 | −0.15 |
+| Good | 1 day, then 6, then interval × ease | unchanged |
+| Easy | 4 days, then interval × ease × 1.3 | +0.15 |
+
+Intervals above two days get ±5% fuzz so cards do not clump, and are capped at a
+year. Leitner is available in Settings: five boxes at 1, 2, 4, 8 and 16 days,
+where Again returns to box 1, Hard holds, and Good or Easy promote. Switching
 scheduler converts your existing progress and keeps your due dates rather than
 resetting you.
 
@@ -71,77 +90,94 @@ pollutes your retention statistics.
 ## The offline dictionary
 
 31,835 English headwords with Turkish meanings ship inside the binary, exported
-from [atlas.dict](../atlas.dict) by `scripts/export-swl` in that repository. They
-power the `TRANSLATION` field's **Use atlas.dict** button, the Turkish section in
-Lookup, and the "did you mean" suggestions when a word is not found — all with no
-network at all.
+from [atlas.dict](https://github.com/fezcode/atlas.dict). They fill the
+translation field, power the Turkish section in Lookup, and back the "did you
+mean" suggestions when a word is not found. None of it touches the network.
 
-A caveat worth stating plainly: `atlas.dict`'s `en-tr` data is a *translation*
-dictionary. Across its 34,406 headwords and 74,656 senses it carries 7 English
-glosses, 6 examples and 7 synonyms. So it supplies meanings in Turkish, not
-English definitions, phonetics or parts of speech — those still come from the
-online services or from you.
+A caveat worth stating plainly: the source is a *translation* dictionary. Across
+its 34,406 headwords and 74,656 senses it carries seven English glosses, six
+examples and seven synonyms. So it supplies meanings in Turkish, not English
+definitions, phonetics or parts of speech. Those come from the online services,
+or from you.
 
-To refresh the asset after atlas.dict changes:
-
-```powershell
-cd ..\atlas.dict
-go run ./scripts/export-swl -out ..\SirWordALot\Assets\dictionary.json
-python -c "import gzip;open('../SirWordALot/Assets/dictionary.json.gz','wb').write(gzip.compress(open('../SirWordALot/Assets/dictionary.json','rb').read(),9))"
-```
-
-## Data
+## Your data
 
 Everything lives in `%APPDATA%\fezcode\SirWordALot`: `library.db` (SQLite, WAL)
 and `backups\`. A timestamped JSON snapshot is written at launch and at most
-hourly, and the newest 20 are kept.
+hourly, and the newest twenty are kept.
 
-JSON export is lossless — it round-trips relations, sentences with their cloze
+JSON export is lossless. It round-trips relations, sentences with their cloze
 spans, SRS state and the full review history, so export then import reproduces
-the library exactly. CSV and Anki TSV are lossy exchange formats.
+the library exactly. CSV and Anki TSV are lossy exchange formats, offered for
+getting words out to other tools.
 
 The only network calls are to `api.datamuse.com` and `api.dictionaryapi.dev`,
 and only when you use Lookup. Turning lookup off in Settings stops them
-entirely. Nothing else leaves the machine.
+entirely. Nothing else ever leaves the machine.
 
-## Build and verify
+## Build from source
+
+Requires the .NET 10 SDK.
 
 ```powershell
-dotnet build SirWordALot.csproj
-dotnet test tests/SirWordALot.Tests.csproj
-dotnet run --project tools/Checks
-dotnet run --project tools/Preview -- dist/preview
-dotnet run --project tools/Measure -- dist/preview
-dotnet publish SirWordALot.csproj -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/SirWordALot
+git clone https://github.com/fezcode/SirWordALot.git
+cd SirWordALot
+dotnet run --project SirWordALot.csproj
 ```
 
-Four layers, none of which drive the live desktop:
+`--help` and `--version` print to the console and exit. `--selftest` opens
+SQLite and loads the embedded dictionary without showing a window, which is how
+the published single-file bundle is verified.
 
-- **Unit tests** cover the schema and migrations, CRUD, the SM-2 and Leitner
-  transition tables, mastery, inflection-aware cloze matching, edit-distance
-  grading, queue construction and daily caps, full-text search, JSON/CSV/TSV
-  round-trips, merge conflicts, backups and lookup parsing — against in-memory
-  SQLite.
-- **Checks** exercise real Avalonia controls headlessly: the palette,
-  typography, window geometry and every view's behaviour.
-- **Preview** renders all nine screens to PNG using the production controls, and
-  **Measure** reads those PNGs back and asserts the palette and chrome geometry
-  in the pixels. It also asserts each view actually draws, which is what caught
-  a bug where every preview rendered fully transparent.
-- **Publish** then running `--version` matters because `Microsoft.Data.Sqlite`
-  carries a native dependency that a single-file bundle resolves differently
-  from `dotnet run`.
+### Release
+
+```powershell
+./version.ps1 -Bump patch     # keep every version site in lockstep
+./build.ps1                   # build, verify, publish, prove it runs
+./installer.ps1 -SkipBuild    # Forge Setup into dist/installer
+```
+
+The installer needs the sibling [Forge](https://github.com/fezcode/Forge)
+project built with `gobake build`. The full flow is written down in
+[AGENTS.md](AGENTS.md).
+
+## Verification
+
+Four layers, none of which drive the live desktop.
+
+| Layer | Command | Covers |
+| --- | --- | --- |
+| Unit tests | `dotnet test tests/SirWordALot.Tests.csproj` | schema and migrations, CRUD, SM-2 and Leitner transition tables, mastery, inflection-aware cloze, edit-distance grading, queue construction and daily caps, full-text search, JSON/CSV/TSV round-trips, merge conflicts, backups, lookup parsing, the offline dictionary |
+| Controls | `dotnet run --project tools/Checks` | palette, typography, window geometry, resize zones, and every view's behaviour through real Avalonia controls, headless |
+| Pixels | `dotnet run --project tools/Preview -- dist/preview` then `tools/Measure` | renders every view, the icon set and this banner, then measures the palette and chrome geometry back out of the PNGs |
+| Shipping | `--selftest` on the published binary | the native SQLite dependency and the embedded dictionary inside a single-file bundle, which `dotnet run` resolves differently |
+
+The pixel layer earns its place: it caught a bug where every rendered view came
+out fully transparent, because `Motion` animates opacity through a
+`DispatcherTimer` that nothing pumps in a headless render. The measurements had
+been passing on window chrome alone.
 
 ## Structure
 
-- `Core/` — SQLite, scheduling, cloze, search, sessions, stats, portability,
-  lookup. No Avalonia reference; a test asserts that stays true.
-- `Shell/` — the frameless window, palette, control factories, motion, command
-  palette, capture hotkey.
-- `Views/` — one file per screen.
-- `tools/` — headless checks, preview renderer, pixel measurements.
+```
+Core/     SQLite, scheduling, cloze, search, sessions, stats, portability,
+          lookup, the offline dictionary. No Avalonia reference; a test asserts it.
+Shell/    Frameless window, palette, control factories, motion, command palette,
+          global capture hotkey.
+Views/    One file per screen.
+tools/    Headless checks, preview renderer, pixel measurements.
+```
 
-An independent project, unaffiliated with Apple or *Severance*. Dictionary data
-from [dictionaryapi.dev](https://dictionaryapi.dev); thesaurus data from
-[Datamuse](https://www.datamuse.com/api/).
+## Acknowledgements
+
+The visual language is lifted from [HammerOS](https://github.com/fezcode/hammeros),
+an unaffiliated fan project inspired by *Severance*. Thesaurus data from
+[Datamuse](https://www.datamuse.com/api/); dictionary senses from
+[dictionaryapi.dev](https://dictionaryapi.dev); Turkish meanings from
+[atlas.dict](https://github.com/fezcode/atlas.dict).
+
+An independent project, unaffiliated with Apple or *Severance*.
+
+## License
+
+[MIT](LICENSE.txt)

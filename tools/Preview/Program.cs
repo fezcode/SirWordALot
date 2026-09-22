@@ -66,6 +66,9 @@ internal static class Program
         RenderIcon(Path.Combine(folder, "icon.png"), 256);
         Console.WriteLine("  wrote icon.png");
 
+        RenderBanner(Path.Combine(folder, "banner.png"));
+        Console.WriteLine("  wrote banner.png");
+
         window.Close();
         Console.WriteLine($"Previews written to {Path.GetFullPath(folder)}.");
         return 0;
@@ -106,6 +109,104 @@ internal static class Program
 
         var target = new RenderTargetBitmap(new PixelSize(size, size), new Vector(96, 96));
         target.Render(panel);
+
+        using var stream = File.Create(path);
+        target.Save(stream);
+    }
+
+    /// <summary>The README banner, composed from the app's own design system so the
+    /// page and the program agree rather than merely resembling each other.</summary>
+    private static void RenderBanner(string path)
+    {
+        const int width = 1280, height = 400;
+
+        // Invariant uppercasing leaves Turkish dotless i as "ı", so "saygınlık"
+        // comes out "SAYGıNLıK". The words are Turkish; case them as Turkish.
+        var turkish = new System.Globalization.CultureInfo("tr-TR");
+
+        var chips = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 10,
+            Margin = new Thickness(0, 26, 0, 0),
+        };
+        foreach (var caption in new[]
+                 { "SPACED REPETITION", "FOUR QUIZ MODES", "31,835 OFFLINE WORDS", "SENTENCE BANK" })
+            chips.Children.Add(new Border
+            {
+                BorderBrush = Ui.Line,
+                BorderThickness = new Thickness(1),
+                Background = Avalonia.Media.Brush.Parse("#F3F4E9"),
+                Padding = new Thickness(13, 7),
+                Child = Ui.Label(caption),
+            });
+
+        var words = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 26,
+            Margin = new Thickness(0, 30, 0, 0),
+        };
+        foreach (var (word, gloss) in new[]
+                 {
+                     ("eminence", "saygınlık"), ("laconic", "az sözle"),
+                     ("pellucid", "berrak"), ("quixotic", "hayalperest"),
+                 })
+            words.Children.Add(Ui.Stack(4,
+                new TextBlock { Text = word, FontFamily = Ui.Serif, FontSize = 21, Foreground = Ui.Ink },
+                Ui.Label(gloss.ToUpper(turkish))));
+
+        var text = Ui.Stack(0,
+            Ui.Label("FEZCODE  ·  VOCABULARY AND THESAURUS"),
+            new TextBlock
+            {
+                Text = "Sir Word-a-lot",
+                FontFamily = Ui.Serif,
+                FontSize = 72,
+                Foreground = Ui.Ink,
+                Margin = new Thickness(0, 12, 0, 0),
+            },
+            new TextBlock
+            {
+                Text = "Meet a word. Keep the sentence it came in. Meet it again until it stays.",
+                FontSize = 15,
+                Foreground = Ui.Muted,
+                Margin = new Thickness(0, 10, 0, 0),
+            },
+            chips);
+
+        var mark = new Border
+        {
+            Width = 148,
+            Height = 148,
+            BorderBrush = Ui.Line,
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+            Margin = new Thickness(0, 6, 46, 0),
+            Child = new Glyph("crest") { Width = 96, Height = 96 },
+        };
+
+        var body = Ui.Columns("Auto,*", mark, text);
+
+        var root = new Border
+        {
+            Width = width,
+            Height = height,
+            Background = Ui.Cream,
+            BorderBrush = Ui.WindowBorder,
+            BorderThickness = new Thickness(1),
+            Child = Ui.Rows("*,Auto,Auto",
+                new Border { Padding = new Thickness(72, 62, 72, 0), Child = body },
+                new Border { Margin = new Thickness(72, 0), Child = Ui.Rule() },
+                new Border { Padding = new Thickness(72, 0, 72, 34), Child = words }),
+        };
+
+        root.Measure(new Size(width, height));
+        root.Arrange(new Rect(0, 0, width, height));
+        root.UpdateLayout();
+
+        var target = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
+        target.Render(root);
 
         using var stream = File.Create(path);
         target.Save(stream);
