@@ -2,12 +2,12 @@
 
 ![Sir Word-a-lot](Assets/banner.png)
 
-**A vocabulary and thesaurus trainer for Windows, in the visual idiom of HammerOS.**
+**A vocabulary and thesaurus trainer, in the visual idiom of HammerOS.**
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20x64-1A3C3E?style=flat-square)](#install)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-1A3C3E?style=flat-square)](#install)
 [![.NET](https://img.shields.io/badge/.NET-10-1A3C3E?style=flat-square)](#build-from-source)
 [![Avalonia](https://img.shields.io/badge/Avalonia-11.3-1A3C3E?style=flat-square)](#build-from-source)
-[![Tests](https://img.shields.io/badge/verifications-460-4E8A7B?style=flat-square)](#verification)
+[![Tests](https://img.shields.io/badge/verifications-533-4E8A7B?style=flat-square)](#verification)
 [![License](https://img.shields.io/badge/license-MIT-4E8A7B?style=flat-square)](LICENSE.txt)
 
 </div>
@@ -23,9 +23,15 @@ unreasonably formal tone about the business of remembering words.
 
 ## Install
 
-Download `SirWordALot-Setup-<version>.exe` from
+**Windows.** Download `SirWordALot-Setup-<version>.exe` from
 [Releases](../../releases) and run it. The build is self-contained; there is no
 runtime to install first.
+
+**macOS and Linux.** Build from source, below. Both platforms are supported in
+the code and cross-compile cleanly to native binaries, and the window draws
+traffic lights on the left in this palette rather than glyph buttons on the
+right. They are not yet part of a release, and have not been run on a real
+machine of either kind, so treat them as buildable rather than tested.
 
 Your library starts with sixty words, already due. Press `Q` for a quiz, or
 `Ctrl+Space` to go anywhere.
@@ -124,6 +130,16 @@ git clone https://github.com/fezcode/SirWordALot.git
 cd SirWordALot
 dotnet run --project SirWordALot.csproj
 ```
+
+For a self-contained binary on any supported platform:
+
+```powershell
+./build.ps1 -Rid win-x64      # or osx-x64, osx-arm64, linux-x64, linux-arm64
+```
+
+Cross-compiling works from any host. The script verifies a cross-built binary
+is a genuine Mach-O or ELF image for its target, but cannot run it, so it says
+so instead of reporting a pass it did not observe.
 
 `--help` and `--version` print to the console and exit. `--selftest` opens
 SQLite and loads the embedded dictionary without showing a window, which is how

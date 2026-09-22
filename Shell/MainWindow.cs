@@ -60,6 +60,19 @@ public sealed class MainWindow : Window
 
     public IReadOnlyList<NavItem> Nav => Items;
 
+    /// <summary>Where this window puts its controls. Detected from the platform,
+    /// overridable so both layouts can be verified on one machine.</summary>
+    public TitlebarStyle TitlebarStyle { get; }
+
+    /// <summary>The centred icon and name.</summary>
+    public Control TitleBlock { get; private set; } = new Border();
+
+    /// <summary>The minimize/maximize/close cluster, whichever side it is on.</summary>
+    public Control WindowControls { get; private set; } = new Border();
+
+    /// <summary>The three lights, or empty on a Windows-style titlebar.</summary>
+    public IReadOnlyList<TrafficLight> TrafficLights { get; private set; } = [];
+
     /// <summary>Which sidebar entries currently carry the selected highlight. Exactly
     /// one should, always; exposed so a check can assert that rather than eyeball it.</summary>
     public IReadOnlyList<string> HighlightedNavIds =>
@@ -71,10 +84,12 @@ public sealed class MainWindow : Window
     public ContentControl Host { get; } = new();
     public TextBlock StatusRight => _statusRight;
 
-    public MainWindow(Library library, Settings settings, Search search, Stats stats, ILookup lookup)
+    public MainWindow(Library library, Settings settings, Search search, Stats stats, ILookup lookup,
+        TitlebarStyle? titlebar = null)
     {
         _library = library;
         _settings = settings;
+        TitlebarStyle = titlebar ?? Platform.DefaultTitlebarStyle;
 
         Title = "Sir Word-a-lot";
         SystemDecorations = SystemDecorations.None;
@@ -105,8 +120,8 @@ public sealed class MainWindow : Window
 
         EnableEdgeResize();
 
-        Activated += (_, _) => Titlebar.Background = Ui.TitlebarActive;
-        Deactivated += (_, _) => Titlebar.Background = Ui.TitlebarInactive;
+        Activated += (_, _) => SetTitlebarActive(true);
+        Deactivated += (_, _) => SetTitlebarActive(false);
         library.Changed += UpdateStatus;
 
         Opened += (_, _) =>
@@ -142,14 +157,35 @@ public sealed class MainWindow : Window
 
     private Border BuildTitlebar()
     {
-        var title = Ui.Label("SIR WORD-A-LOT", Ui.Ink);
-        var left = Ui.Row(12, new Glyph("crest") { Width = 17, Height = 17 }, title);
-        left.Margin = new Thickness(16, 0);
+        // The identity is centred on every platform. Absolute centring in a Panel
+        // rather than a Grid column, so it does not shift when the controls on one
+        // side are a different width from the space on the other.
+        var identity = Ui.Row(11,
+            new Glyph("crest") { Width = 17, Height = 17 },
+            Ui.Label("SIR WORD-A-LOT", Ui.Ink));
+        identity.HorizontalAlignment = HorizontalAlignment.Center;
+        identity.VerticalAlignment = VerticalAlignment.Center;
+        identity.Background = Brushes.Transparent;
+        TitleBlock = identity;
 
-        var buttons = Ui.Row(0,
-            Ui.IconButton("minimize", "Minimize", () => WindowState = WindowState.Minimized),
-            Ui.IconButton("maximize", "Maximize / restore", ToggleMaximize),
-            Ui.IconButton("close", "Close", Close));
+        Control controls;
+        if (TitlebarStyle == TitlebarStyle.TrafficLightsLeft)
+        {
+            var (panel, lights) = TitlebarControls.TrafficLights(
+                Close, () => WindowState = WindowState.Minimized, ToggleMaximize);
+            panel.HorizontalAlignment = HorizontalAlignment.Left;
+            TrafficLights = lights;
+            controls = panel;
+        }
+        else
+        {
+            var buttons = TitlebarControls.WindowsButtons(
+                () => WindowState = WindowState.Minimized, ToggleMaximize, Close);
+            buttons.HorizontalAlignment = HorizontalAlignment.Right;
+            controls = buttons;
+        }
+
+        WindowControls = controls;
 
         var bar = new Border
         {
@@ -157,7 +193,7 @@ public sealed class MainWindow : Window
             Background = Ui.TitlebarActive,
             BorderBrush = Ui.Line,
             BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = Ui.Columns("*,Auto", left, buttons),
+            Child = new Panel { Children = { identity, controls } },
         };
 
         bar.PointerPressed += (_, e) =>
@@ -241,6 +277,14 @@ public sealed class MainWindow : Window
             (_, _, _, true) => WindowEdge.South,
             _ => null,
         };
+    }
+
+    /// <summary>Focus drives both the titlebar tint and the traffic lights, which
+    /// grey out on an unfocused window exactly as macOS does.</summary>
+    public void SetTitlebarActive(bool active)
+    {
+        Titlebar.Background = active ? Ui.TitlebarActive : Ui.TitlebarInactive;
+        foreach (var light in TrafficLights) light.SetLit(active);
     }
 
     private void ToggleMaximize() =>

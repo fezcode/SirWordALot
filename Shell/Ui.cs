@@ -25,8 +25,22 @@ public static class Ui
         Danger = Brush.Parse("#99513D"),
         Accent = Brush.Parse("#4E8A7B");
 
-    public static readonly FontFamily Mono = new("Cascadia Mono, Consolas");
-    public static readonly FontFamily Serif = new("Georgia, Times New Roman");
+    // Traffic lights in this palette rather than the system red/amber/green.
+    // Terracotta, ochre and sage keep the same earthy register as the rest,
+    // while staying distinguishable from one another at 12px.
+    public static readonly IBrush
+        SignalClose = Brush.Parse("#99513D"),
+        SignalMinimize = Brush.Parse("#A8894E"),
+        SignalMaximize = Brush.Parse("#4E8A7B"),
+        SignalIdle = Brush.Parse("#B7C1B6");
+
+    // The first name that exists wins, so Windows keeps Cascadia and Georgia
+    // while macOS falls back to Menlo and Linux to the DejaVu faces.
+    public static readonly FontFamily Mono =
+        new("Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, Liberation Mono, monospace");
+
+    public static readonly FontFamily Serif =
+        new("Georgia, Times New Roman, DejaVu Serif, Liberation Serif, serif");
 
     public static TextBlock Text(string text, double size = 13, IBrush? color = null, bool mono = false) => new()
     {

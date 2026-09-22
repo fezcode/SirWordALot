@@ -7,11 +7,17 @@
     <RootNamespace>SirWordALot</RootNamespace>
     <Version>0.1.1</Version>
     <Company>Fezcode</Company>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets/SirWordALot.ico</ApplicationIcon>
     <!-- Symbols go inside the executable rather than beside it, so a release
          payload is one file and no .pdb ships next to the app. -->
     <DebugType>embedded</DebugType>
+    <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- The manifest and .ico are Windows resource formats; naming them on a
+       macOS or Linux publish only produces warnings. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.StartsWith('win'))">
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/SirWordALot.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tools/**;tests/**" />

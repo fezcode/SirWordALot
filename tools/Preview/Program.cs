@@ -77,6 +77,15 @@ internal static class Program
             selectable.ToggleSelectMode();
         }
 
+        // The macOS and Linux titlebar, rendered on Windows so the layout nobody
+        // here sees day to day still gets looked at.
+        var mac = new MainWindow(library, settings, new Search(db), new Stats(db), new StubLookup(),
+            TitlebarStyle.TrafficLightsLeft);
+        mac.Show();
+        Render(mac, Path.Combine(folder, "titlebar-unix.png"));
+        Console.WriteLine("  wrote titlebar-unix.png");
+        mac.Close();
+
         RenderIcon(Path.Combine(folder, "icon.png"), 256);
         Console.WriteLine("  wrote icon.png");
 

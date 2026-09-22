@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Layout;
 using Avalonia.Media;
 using SirWordALot.Core;
 using SirWordALot.Shell;
@@ -153,6 +154,68 @@ internal static class Program
         CheckResizeEdges(window);
 
         window.Close();
+
+        CheckTitlebarLayouts(db, library);
+    }
+
+    /// <summary>Both titlebars are built on this one machine, because the layout a
+    /// developer never sees is the one that rots.</summary>
+    private static void CheckTitlebarLayouts(Db db, Library library)
+    {
+        foreach (var style in new[] { TitlebarStyle.WindowsRight, TitlebarStyle.TrafficLightsLeft })
+        {
+            var window = new MainWindow(library, new Settings(db), new Search(db), new Stats(db),
+                new StubLookup(), style);
+            window.Show();
+            window.Measure(new Size(window.Width, window.Height));
+            window.Arrange(new Rect(0, 0, window.Width, window.Height));
+            window.UpdateLayout();
+
+            var name = style.ToString();
+            Expect($"{name} style is honoured", style, window.TitlebarStyle);
+
+            // The identity is centred on both, which is the whole point.
+            Expect($"{name} centres the title",
+                HorizontalAlignment.Center, window.TitleBlock.HorizontalAlignment);
+
+            var titleCentre = window.TitleBlock.Bounds.Center.X;
+            var barCentre = window.Titlebar.Bounds.Width / 2;
+            Expect($"{name} title sits on the midline", true, Math.Abs(titleCentre - barCentre) <= 1.5,
+                $"title at {titleCentre:F1}, midline {barCentre:F1}");
+
+            if (style == TitlebarStyle.TrafficLightsLeft)
+            {
+                Expect("traffic lights sit left",
+                    HorizontalAlignment.Left, window.WindowControls.HorizontalAlignment);
+                Expect("three lights", 3, window.TrafficLights.Count);
+                Expect("in macOS order", "close,minimize,maximize",
+                    string.Join(",", window.TrafficLights.Select(l => l.Kind)));
+
+                // Coloured while focused, grey while not, the way macOS behaves.
+                Expect("lights are lit on a focused window", true,
+                    window.TrafficLights.All(l => l.IsLit));
+
+                window.SetTitlebarActive(false);
+                Expect("lights grey out when unfocused", true,
+                    window.TrafficLights.All(l => !l.IsLit));
+                Expect("titlebar dims too", "#FFCCD6C9", Hex(window.Titlebar.Background!));
+
+                window.SetTitlebarActive(true);
+                Expect("lights return on refocus", true, window.TrafficLights.All(l => l.IsLit));
+
+                Expect("close is terracotta", "#FF99513D", Hex(Ui.SignalClose));
+                Expect("minimize is ochre", "#FFA8894E", Hex(Ui.SignalMinimize));
+                Expect("maximize is sage", "#FF4E8A7B", Hex(Ui.SignalMaximize));
+            }
+            else
+            {
+                Expect("windows buttons sit right",
+                    HorizontalAlignment.Right, window.WindowControls.HorizontalAlignment);
+                Expect("no traffic lights on windows", 0, window.TrafficLights.Count);
+            }
+
+            window.Close();
+        }
     }
 
     /// <summary>A frameless window has no platform resize border, so every edge and
@@ -623,10 +686,10 @@ internal static class Program
 
     private static string Hex(IBrush brush) => ((ISolidColorBrush)brush).Color.ToString().ToUpperInvariant();
 
-    private static void Expect<T>(string name, T expected, T actual)
+    private static void Expect<T>(string name, T expected, T actual, string? detail = null)
     {
         if (Equals(expected, actual)) { _passes++; return; }
-        Fail($"{name}: expected {expected}, got {actual}");
+        Fail($"{name}: expected {expected}, got {actual}{(detail is null ? "" : $" ({detail})")}");
     }
 
     private static void Fail(string message)

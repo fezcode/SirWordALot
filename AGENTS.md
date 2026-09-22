@@ -2,8 +2,11 @@
 
 ## Scope and defaults
 
-This repository is Sir Word-a-lot, a Windows vocabulary and thesaurus trainer
-built with Avalonia/.NET 10. Preserve existing changes when working in a dirty
+This repository is Sir Word-a-lot, a vocabulary and thesaurus trainer built with
+Avalonia/.NET 10. Windows is the released platform; macOS and Linux build and
+cross-compile from here but cannot be run or verified on this machine, so never
+claim a macOS or Linux build works — say it was produced and needs testing on
+the target. Preserve existing changes when working in a dirty
 checkout. Build scripts live at the repository root; Forge is the sibling
 `../Forge` project. The visual language is lifted from the sibling `../hammeros`
 project, and the offline dictionary is exported from `../atlas.dict`.
@@ -50,6 +53,13 @@ that looked plausible and were wrong:
 Anything animated is suspect in a headless render. When a preview disagrees
 with the object model, check the live window before changing the app: the
 measurement is more likely wrong than the program.
+
+The window is frameless on every platform, so the titlebar is drawn rather than
+supplied. The identity is centred everywhere; Windows puts glyph buttons on the
+right, macOS and Linux put traffic lights on the left, in this palette rather
+than the system red, amber and green, lit while the window has focus. Both
+layouts are built and asserted by `tools/Checks` on whatever machine runs it,
+because the one a developer never sees is the one that rots.
 
 `Shell/Controls.axaml` is the single stylesheet. `App.axaml` and
 `tools/Preview` both include it; never give the preview its own copy, or a
