@@ -59,6 +59,11 @@ public sealed class MainWindow : Window
     private Capture? _capture;
 
     public IReadOnlyList<NavItem> Nav => Items;
+
+    /// <summary>Which sidebar entries currently carry the selected highlight. Exactly
+    /// one should, always; exposed so a check can assert that rather than eyeball it.</summary>
+    public IReadOnlyList<string> HighlightedNavIds =>
+        _navButtons.Where(p => p.Value.Classes.Contains("selected")).Select(p => p.Key).ToList();
     public string CurrentViewId { get; private set; } = "";
     public Border Titlebar { get; }
     public Border SidebarPanel { get; }

@@ -33,10 +33,27 @@ can use it is fine, driving their desktop is not.
 4. `dotnet run --project tools/Measure -- dist/preview` — reads those PNGs back
    and asserts the palette and chrome geometry in the pixels.
 
-`tools/Preview` must set `Motion.Enabled = false`. Motion animates opacity from
-zero through a `DispatcherTimer`; nothing pumps the dispatcher in a headless
-render, so leaving it on writes eight fully transparent screenshots that still
-pass any measurement sampling only window chrome.
+Two headless-rendering traps, both of which have already produced screenshots
+that looked plausible and were wrong:
+
+- `tools/Preview` must set `Motion.Enabled = false`. Motion animates opacity
+  from zero through a `DispatcherTimer`; nothing pumps the dispatcher in a
+  headless render, so leaving it on writes fully transparent screenshots that
+  still pass any measurement sampling only window chrome.
+- `tools/Preview` must also strip `Transitions` from button content presenters.
+  Backgrounds cross-fade over 140ms and a frozen transition renders its
+  *starting* value, so a button that just gained the selected class appears
+  unselected and one that just lost it appears selected. This showed the
+  sidebar with six highlighted entries at once while the running app was
+  correct.
+
+Anything animated is suspect in a headless render. When a preview disagrees
+with the object model, check the live window before changing the app: the
+measurement is more likely wrong than the program.
+
+`Shell/Controls.axaml` is the single stylesheet. `App.axaml` and
+`tools/Preview` both include it; never give the preview its own copy, or a
+rendered screenshot can be styled differently from what ships.
 
 ## RELEASE workflow
 

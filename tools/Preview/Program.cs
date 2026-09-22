@@ -1,5 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Styling;
+using Avalonia.Controls.Presenters;
+using Avalonia.Animation;
 using Avalonia.Headless;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
@@ -61,6 +64,17 @@ internal static class Program
         {
             RenderIcon(Path.Combine(folder, $"icon-{size}.png"), size);
             Console.WriteLine($"  wrote icon-{size}.png");
+        }
+
+        // Select mode, with a few rows ticked, so the bulk action bar is visible.
+        window.Navigate("library");
+        if (window.Host.Content is SirWordALot.Views.LibraryView selectable)
+        {
+            selectable.ToggleSelectMode();
+            foreach (var hit in selectable.Hits.Take(3)) selectable.ToggleChecked(hit.Entry.Id);
+            Render(window, Path.Combine(folder, "select.png"));
+            Console.WriteLine("  wrote select.png");
+            selectable.ToggleSelectMode();
         }
 
         RenderIcon(Path.Combine(folder, "icon.png"), 256);
@@ -289,9 +303,21 @@ internal sealed class PreviewApp : Application
     public override void Initialize()
     {
         Styles.Add(new Avalonia.Themes.Fluent.FluentTheme());
+        // The very same Shell/Controls.axaml the application loads, linked into
+        // this assembly, so a preview cannot drift from what ships.
         Styles.Add(new StyleInclude(new Uri("avares://SirWordALot.Preview/"))
         {
-            Source = new Uri("avares://SirWordALot.Preview/PreviewStyles.axaml"),
+            Source = new Uri("avares://SirWordALot.Preview/Shell/Controls.axaml"),
         });
+
+        // Button backgrounds cross-fade over 140ms. A headless render pumps no
+        // dispatcher, so every transition freezes at its starting value: a button
+        // that just gained the selected class renders unselected, and one that just
+        // lost it renders selected. Same trap as Motion, and it made the sidebar
+        // show six highlighted entries at once. Strip transitions for rendering.
+        var instant = new Style(x => x.OfType<Button>()
+            .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
+        instant.Setters.Add(new Setter(Animatable.TransitionsProperty, new Transitions()));
+        Styles.Add(instant);
     }
 }

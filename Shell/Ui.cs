@@ -198,6 +198,55 @@ public static class Ui
 
     /// <summary>The institutional eyebrow identifier, e.g. <c>0X 4A 92</c>.</summary>
     public static string HexId(long id) => "0X " + $"{id & 0xFFFF:X4}".Insert(2, " ");
+
+    // ---- context menus -------------------------------------------------
+
+    /// <summary>A right-click menu. Pass <see cref="Separator"/> between groups.</summary>
+    public static ContextMenu Menu(params Control[] items)
+    {
+        var menu = new ContextMenu();
+        foreach (var item in items) menu.Items.Add(item);
+        return menu;
+    }
+
+    public static MenuItem Item(string header, Action click, bool enabled = true, string? cls = null)
+    {
+        var item = new MenuItem { Header = header, IsEnabled = enabled };
+        if (cls is not null) item.Classes.Add(cls);
+        item.Click += (_, _) => click();
+        return item;
+    }
+
+    /// <summary>A submenu. Disabled automatically when it would be empty, because a
+    /// submenu that opens onto nothing reads as a bug.</summary>
+    public static MenuItem Submenu(string header, params Control[] children)
+    {
+        var item = new MenuItem { Header = header, IsEnabled = children.Length > 0 };
+        foreach (var child in children) item.Items.Add(child);
+        return item;
+    }
+
+    public static Separator Divider() => new();
+
+    /// <summary>Copies text, reporting through <paramref name="toast"/> either way.
+    /// The clipboard is not always reachable and silence would be confusing.</summary>
+    public static async void Copy(Visual anchor, string text, Action<string> toast, string what)
+    {
+        try
+        {
+            if (TopLevel.GetTopLevel(anchor)?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+                toast($"{what} copied.");
+                return;
+            }
+            toast("Could not reach the clipboard.");
+        }
+        catch (Exception e) when (e is InvalidOperationException or NotSupportedException)
+        {
+            toast("Could not reach the clipboard.");
+        }
+    }
 }
 
 /// <summary>Hands a URL to the operating system's default handler. Used for

@@ -140,6 +140,10 @@ internal static class Program
             window.Navigate(item.Id);
             Expect($"navigate {item.Id}", item.Id, window.CurrentViewId);
             Expect($"{item.Id} has content", true, window.Host.Content is not null);
+
+            // Exactly one sidebar entry may be highlighted, and it must be this one.
+            Expect($"{item.Id} is the only highlight",
+                item.Id, string.Join(",", window.HighlightedNavIds));
         }
 
         window.Navigate("library");
@@ -223,8 +227,112 @@ internal static class Program
         Expect("filter saved as smart deck", true,
             library.Decks().Single(d => d.Id == deckId).FilterJson is { Length: > 0 });
 
+        CheckRowMenu(view, library);
+        CheckSelectMode(view, library);
+
         view.Dispose();
         starred.Dispose();
+    }
+
+    private static void CheckRowMenu(LibraryView view, Library library)
+    {
+        var entry = library.FindEntry("laconic")!;
+        var menu = view.RowMenu(entry);
+        var headers = Headers(menu);
+
+        Expect("row menu opens", true, headers.Contains("Open"));
+        Expect("row menu quizzes", true, headers.Contains("Quiz this word"));
+        Expect("row menu stars", true, headers.Contains("Star"));
+        Expect("row menu archives", true, headers.Contains("Archive"));
+        Expect("row menu looks up", true, headers.Contains("Look this word up"));
+        Expect("row menu copies", true, headers.Contains("Copy headword"));
+        Expect("row menu deletes", true, headers.Contains("Delete..."));
+
+        // A manual deck is offerable; a smart deck is not, because its membership
+        // follows a filter and cannot be added to by hand.
+        var manual = library.CreateDeck("Hand-built");
+        var refreshed = Headers(view.RowMenu(entry));
+        Expect("add-to-deck offers manual decks", true, refreshed.Contains("Hand-built"));
+        Expect("add-to-deck hides smart decks", false, refreshed.Contains("Everything"));
+
+        library.AddToDeck(manual, entry.Id);
+        var member = FindItem(view.RowMenu(entry), "Hand-built");
+        Expect("a deck already holding the word is disabled", false, member?.IsEnabled);
+
+        // The label must track state rather than always reading "Star".
+        library.SetStarred(entry.Id, true);
+        Expect("star label follows state", true,
+            Headers(view.RowMenu(library.GetEntry(entry.Id)!)).Contains("Unstar"));
+        library.SetStarred(entry.Id, false);
+    }
+
+    private static void CheckSelectMode(LibraryView view, Library library)
+    {
+        Expect("starts out of select mode", false, view.SelectMode);
+
+        view.ToggleSelectMode();
+        Expect("enters select mode", true, view.SelectMode);
+        Expect("nothing ticked initially", 0, view.Checked.Count);
+
+        var first = view.Hits[0].Entry.Id;
+        view.ToggleChecked(first);
+        Expect("ticks one", 1, view.Checked.Count);
+        view.ToggleChecked(first);
+        Expect("unticks the same one", 0, view.Checked.Count);
+
+        view.SelectAll();
+        Expect("selects all on screen", view.Hits.Count, view.Checked.Count);
+
+        // A tick must not survive being filtered off screen, or a bulk action would
+        // hit words the user can no longer see.
+        view.SearchBox.Text = "laconic";
+        view.Refresh();
+        Expect("filtered rows drop their tick", 1, view.Checked.Count);
+        Expect("the surviving tick is the visible row", true,
+            view.Checked.Contains(view.Hits[0].Entry.Id));
+
+        view.SearchBox.Text = "";
+        view.Refresh();
+
+        view.SelectNone();
+        Expect("clears the selection", 0, view.Checked.Count);
+
+        // Deleting through the library must really remove the words.
+        var before = library.Count;
+        view.SelectAll();
+        var doomed = view.Checked.ToArray();
+        foreach (var id in doomed) library.DeleteEntry(id);
+        view.Refresh();
+        Expect("bulk delete removes them", before - doomed.Length, library.Count);
+        Expect("selection empties after deletion", 0, view.Checked.Count);
+
+        view.ToggleSelectMode();
+        Expect("leaves select mode", false, view.SelectMode);
+    }
+
+    private static List<string> Headers(ContextMenu menu)
+    {
+        var headers = new List<string>();
+        foreach (var item in menu.Items)
+        {
+            if (item is not MenuItem entry) continue;
+            if (entry.Header is string header) headers.Add(header);
+            foreach (var child in entry.Items)
+                if (child is MenuItem nested && nested.Header is string nestedHeader) headers.Add(nestedHeader);
+        }
+        return headers;
+    }
+
+    private static MenuItem? FindItem(ContextMenu menu, string header)
+    {
+        foreach (var item in menu.Items)
+        {
+            if (item is not MenuItem entry) continue;
+            if (Equals(entry.Header, header)) return entry;
+            foreach (var child in entry.Items)
+                if (child is MenuItem nested && Equals(nested.Header, header)) return nested;
+        }
+        return null;
     }
 
     private static void CheckSentencesView()
@@ -249,6 +357,19 @@ internal static class Program
         view.SearchBox.Text = "obfuscates";
         view.Refresh();
         Expect("search narrows", 1, view.Rows.Count);
+
+        var linked = view.Rows.Single(r => r.EntryId is not null);
+        var loose = library.AllSentences(looseOnly: true).Single();
+
+        var linkedHeaders = Headers(view.RowMenu(linked));
+        Expect("sentence menu edits", true, linkedHeaders.Contains("Edit..."));
+        Expect("sentence menu unlinks", true, linkedHeaders.Contains("Unlink from its word"));
+        Expect("sentence menu copies", true, linkedHeaders.Contains("Copy sentence"));
+        Expect("sentence menu deletes", true, linkedHeaders.Contains("Delete"));
+        Expect("linked sentence can open its word", true, FindItem(view.RowMenu(linked), "Open its word")?.IsEnabled);
+
+        Expect("loose sentence offers linking", true, Headers(view.RowMenu(loose)).Contains("Link to a word"));
+        Expect("loose sentence cannot open a word", false, FindItem(view.RowMenu(loose), "Open its word")?.IsEnabled);
 
         view.Dispose();
     }
@@ -369,6 +490,23 @@ internal static class Program
         var smartDeck = view.Decks.Single(d => d.Id == smart);
         Expect("smart deck evaluates live", 1, view.MembersOf(smartDeck).Count);
         Expect("smart deck resolves", "laconic", view.MembersOf(smartDeck)[0].Headword);
+
+        var manualDeck = view.Decks.Single(d => d.Id == manual);
+        var headers = Headers(view.RowMenu(manualDeck, smart: false));
+        Expect("deck menu opens", true, headers.Contains("Open"));
+        Expect("deck menu renames", true, headers.Contains("Rename..."));
+        Expect("deck menu quizzes", true, headers.Contains("Quiz this deck"));
+        Expect("deck menu deletes", true, headers.Contains("Delete..."));
+
+        // Renaming was reachable in Core but had no route through the interface.
+        library.RenameDeck(manual, "Final exam");
+        view.Refresh();
+        Expect("rename lands", "Final exam", view.Decks.Single(d => d.Id == manual).Name);
+
+        var emptyDeck = library.CreateDeck("Nothing in here");
+        view.Refresh();
+        Expect("an empty deck cannot be quizzed", false,
+            FindItem(view.RowMenu(view.Decks.Single(d => d.Id == emptyDeck), false), "Quiz this deck")?.IsEnabled);
 
         view.Dispose();
     }

@@ -1,0 +1,191 @@
+<!--
+  Every control style the app uses, in one file.
+
+  App.axaml and tools/Preview both include this rather than keeping their own
+  copies: a preview rendered with a different stylesheet than the app is a
+  verification layer that can quietly lie about what ships.
+-->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Foreground" Value="#183C40"/>
+  </Style>
+
+  <!-- Every inline control shares one height so a toolbar row reads as a row
+       rather than as three controls that happen to sit near each other. -->
+  <Style Selector="Button">
+    <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#183C40"/>
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="14,0"/><Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="MinHeight" Value="36"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.14"/>
+        <BrushTransition Property="Foreground" Duration="0:0:0.14"/>
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#D4DED6"/><Setter Property="Foreground" Value="#123A3F"/>
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#B6CCC3"/>
+  </Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Foreground" Value="#9DAFA6"/><Setter Property="Background" Value="Transparent"/>
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="#214B4D"/><Setter Property="Foreground" Value="#F0F0DF"/>
+    <Setter Property="Padding" Value="20,0"/>
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#2C5C5D"/><Setter Property="Foreground" Value="#F0F0DF"/>
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1A3C3E"/><Setter Property="Foreground" Value="#F0F0DF"/>
+  </Style>
+  <Style Selector="Button.outline">
+    <Setter Property="BorderBrush" Value="#AABBB2"/><Setter Property="BorderThickness" Value="1"/>
+  </Style>
+  <Style Selector="Button.nav">
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="Padding" Value="18,9"/>
+  </Style>
+  <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#CBD7C9"/>
+  </Style>
+  <Style Selector="Button.dark"><Setter Property="Foreground" Value="#9FCAC7"/></Style>
+  <Style Selector="Button.dark:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#24494D"/><Setter Property="Foreground" Value="#C5F6ED"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
+    <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="Foreground" Value="#183C40"/>
+    <Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="10,7"/>
+    <Setter Property="MinHeight" Value="36"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#8FA79B"/>
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#406E65"/><Setter Property="BorderThickness" Value="1"/>
+  </Style>
+  <Style Selector="TextBox.terminal">
+    <Setter Property="FontFamily" Value="Cascadia Mono, Consolas"/>
+    <Setter Property="Foreground" Value="#AFE2D8"/><Setter Property="CaretBrush" Value="#AFE2D8"/>
+    <Setter Property="Background" Value="#102E34"/><Setter Property="BorderThickness" Value="0"/>
+  </Style>
+
+  <!-- Fluent's dropdown is white with a blue accent, which reads as a different
+       application entirely. Everything below repaints it. -->
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
+    <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Foreground" Value="#183C40"/><Setter Property="MinHeight" Value="36"/>
+    <Setter Property="Padding" Value="10,0"/><Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="PlaceholderForeground" Value="#81998F"/>
+  </Style>
+  <Style Selector="ComboBox /template/ Border#Background">
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
+    <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="BorderThickness" Value="1"/>
+  </Style>
+  <Style Selector="ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="Background" Value="#EFEFE2"/><Setter Property="BorderBrush" Value="#8FA79B"/>
+  </Style>
+  <Style Selector="ComboBox:pressed /template/ Border#Background">
+    <Setter Property="Background" Value="#E6E7D9"/><Setter Property="BorderBrush" Value="#8FA79B"/>
+  </Style>
+  <Style Selector="ComboBox:focus /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="#406E65"/>
+  </Style>
+  <Style Selector="ComboBox /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="#ECEDE0"/><Setter Property="BorderBrush" Value="#9CAEA0"/>
+    <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="0"/>
+  </Style>
+  <Style Selector="ComboBox /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Foreground" Value="#688178"/>
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="Foreground" Value="#183C40"/>
+    <Setter Property="Padding" Value="12,9"/><Setter Property="MinHeight" Value="0"/>
+  </Style>
+  <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#D4DED6"/><Setter Property="Foreground" Value="#123A3F"/>
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="#CBD7C9"/><Setter Property="Foreground" Value="#123A3F"/>
+  </Style>
+  <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#B9C9BA"/><Setter Property="Foreground" Value="#123A3F"/>
+  </Style>
+
+  <!-- Fluent's checkbox is a rounded blue square, the one default that shows
+       through hardest against this palette. -->
+  <Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="#183C40"/><Setter Property="MinHeight" Value="0"/>
+  </Style>
+  <Style Selector="CheckBox /template/ Border#NormalRectangle">
+    <Setter Property="CornerRadius" Value="0"/><Setter Property="Background" Value="#F5F3E8"/>
+    <Setter Property="BorderBrush" Value="#AFBEB5"/><Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Width" Value="18"/><Setter Property="Height" Value="18"/>
+  </Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#EFEFE2"/><Setter Property="BorderBrush" Value="#8FA79B"/>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#214B4D"/><Setter Property="BorderBrush" Value="#214B4D"/>
+  </Style>
+  <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#2C5C5D"/><Setter Property="BorderBrush" Value="#2C5C5D"/>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+    <Setter Property="Fill" Value="#F0F0DF"/>
+  </Style>
+  <Style Selector="CheckBox:indeterminate /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#9CAEA0"/><Setter Property="BorderBrush" Value="#9CAEA0"/>
+  </Style>
+
+  <!-- Right-click menus, repainted the same way as the dropdown. -->
+  <Style Selector="ContextMenu">
+    <Setter Property="Background" Value="#ECEDE0"/><Setter Property="BorderBrush" Value="#9CAEA0"/>
+    <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="0,4"/><Setter Property="FontSize" Value="13"/>
+  </Style>
+  <Style Selector="MenuItem">
+    <Setter Property="Foreground" Value="#183C40"/><Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="14,7"/><Setter Property="Cursor" Value="Hand"/>
+  </Style>
+  <Style Selector="MenuItem /template/ Border#PART_LayoutRoot">
+    <Setter Property="CornerRadius" Value="0"/>
+  </Style>
+  <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="#D4DED6"/>
+  </Style>
+  <Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="#CBD7C9"/>
+  </Style>
+  <Style Selector="MenuItem:disabled">
+    <Setter Property="Foreground" Value="#9DAFA6"/><Setter Property="Cursor" Value="Arrow"/>
+  </Style>
+  <Style Selector="MenuItem.danger"><Setter Property="Foreground" Value="#99513D"/></Style>
+  <Style Selector="Separator">
+    <Setter Property="Background" Value="#BCC8BB"/><Setter Property="Height" Value="1"/>
+    <Setter Property="Margin" Value="0,4"/>
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#193C40"/><Setter Property="Foreground" Value="#F0F0DF"/>
+    <Setter Property="CornerRadius" Value="0"/>
+  </Style>
+
+</Styles>

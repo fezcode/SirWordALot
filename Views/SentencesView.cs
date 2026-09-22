@@ -124,6 +124,7 @@ public sealed class SentencesView : UserControl, IDisposable
                 Ui.Row(8, Ui.Text(word, 12, word == "—" ? Ui.Muted : Ui.Ink), actions),
                 Ui.Label(sentence.Source?.ToUpperInvariant() ?? "—"));
             row.Margin = new Thickness(26, 15);
+            row.ContextMenu = RowMenu(sentence);
 
             _list.Children.Add(row);
             _list.Children.Add(Ui.Rule(Ui.RowRule));
@@ -132,6 +133,73 @@ public sealed class SentencesView : UserControl, IDisposable
         if (Rows.Count == 0)
             _list.Children.Add(Ui.Pad(
                 Ui.Text("No sentences yet. Paste one you met in the wild.", 13, Ui.Muted), 30));
+    }
+
+    public ContextMenu RowMenu(Sentence sentence)
+    {
+        var linked = sentence.EntryId is not null;
+
+        return Ui.Menu(
+            Ui.Item("Edit...", () => ShowEditForm(sentence)),
+            Ui.Item(linked ? "Unlink from its word" : "Link to a word", () => ToggleLink(sentence)),
+            Ui.Item("Open its word",
+                () => _context.Navigate("library", sentence.EntryId ?? 0L), enabled: linked),
+            Ui.Divider(),
+            Ui.Item("Copy sentence", () => Ui.Copy(this, sentence.Text, _context.Toast, "Sentence")),
+            Ui.Divider(),
+            Ui.Item("Delete", () =>
+            {
+                _context.Library.DeleteSentence(sentence.Id);
+                _context.Toast("Sentence deleted.");
+            }, cls: "danger"));
+    }
+
+    /// <summary>Editing a stored sentence. The bank could previously only add,
+    /// link and delete, so a typo meant deleting and retyping.</summary>
+    private void ShowEditForm(Sentence sentence)
+    {
+        var text = new TextBox
+        {
+            Text = sentence.Text,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            MinHeight = 96,
+        };
+        var source = new TextBox { Text = sentence.Source ?? "", Watermark = "Where it came from (optional)" };
+        var error = Ui.Text("", 12, Ui.Danger);
+
+        ShowPanel(Ui.Stack(16,
+            Ui.Heading("SENTENCE BANK", "Edit this sentence.",
+                sentence.ClozeStart is not null
+                    ? "It has a cloze blank set; changing the text clears it."
+                    : "Fix a typo, or trim it down to the part that matters."),
+            text,
+            source,
+            error,
+            Ui.Row(12,
+                Ui.Button("Cancel", RestoreList, "outline"),
+                Ui.Button("Save sentence", () =>
+                {
+                    var value = text.Text?.Trim() ?? "";
+                    if (value.Length == 0) { error.Text = "A sentence cannot be blank."; return; }
+
+                    // A stored cloze span indexes into the old text, so it cannot
+                    // survive an edit; drop it rather than blank the wrong word.
+                    var changed = value != sentence.Text;
+
+                    _context.Library.UpdateSentence(sentence with
+                    {
+                        Text = value,
+                        Source = string.IsNullOrWhiteSpace(source.Text) ? null : source.Text!.Trim(),
+                        ClozeStart = changed ? null : sentence.ClozeStart,
+                        ClozeLength = changed ? null : sentence.ClozeLength,
+                    });
+
+                    _context.Toast("Sentence saved.");
+                    RestoreList();
+                }, "primary"))));
+
+        text.Focus();
     }
 
     private void ToggleLink(Sentence sentence)

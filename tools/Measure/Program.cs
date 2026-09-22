@@ -63,6 +63,11 @@ internal static class Program
             // A view that failed to render would leave the whole content area a flat
             // cream field, so require the surface to actually carry ink.
             Expect($"{view} draws content", true, DistinctColours(bitmap, 180, 50, 990, 660) > 12);
+
+            // Exactly one sidebar entry may carry the selected tint. Button
+            // backgrounds cross-fade, and a frozen transition once left six
+            // highlighted at once in a headless render while the app was fine.
+            Expect($"{view} highlights one nav row", 1, HighlightedNavRows(bitmap));
         }
     }
 
@@ -89,6 +94,23 @@ internal static class Program
     {
         var pixel = bitmap.GetPixel(x, y);
         return $"#{pixel.Red:X2}{pixel.Green:X2}{pixel.Blue:X2}";
+    }
+
+    /// <summary>Counts the sidebar bands painted with the selected tint, by walking
+    /// down the nav column and tallying runs rather than assuming row positions.</summary>
+    private static int HighlightedNavRows(SKBitmap bitmap)
+    {
+        const string Selected = "#CBD7C9";
+        var runs = 0;
+        var inRun = false;
+
+        for (var y = 50; y < 710; y++)
+        {
+            var hit = Hex(bitmap, 120, y) == Selected;
+            if (hit && !inRun) runs++;
+            inRun = hit;
+        }
+        return runs;
     }
 
     /// <summary>How many distinct colours appear in a region. A blank view is one

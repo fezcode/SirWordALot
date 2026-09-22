@@ -66,6 +66,7 @@ public sealed class DecksView : UserControl, IDisposable
 
             var row = Ui.Columns("*,Auto", left, actions);
             row.Margin = new Thickness(30, 16);
+            row.ContextMenu = RowMenu(current, smart);
 
             list.Children.Add(row);
             list.Children.Add(Ui.Rule(Ui.RowRule));
@@ -142,6 +143,50 @@ public sealed class DecksView : UserControl, IDisposable
         header.Margin = new Thickness(30, 26, 30, 20);
 
         _body.Content = Ui.Rows("Auto,Auto,*", header, Ui.Rule(), Ui.Scroll(list));
+    }
+
+    public ContextMenu RowMenu(Deck deck, bool smart)
+    {
+        var members = MembersOf(deck);
+
+        return Ui.Menu(
+            Ui.Item("Open", () => Open(deck.Id)),
+            Ui.Item("Quiz this deck",
+                () => _context.Navigate("quiz", new ReviewScope(ScopeKind.Deck, DeckId: deck.Id)),
+                enabled: members.Count > 0),
+            Ui.Divider(),
+            Ui.Item("Rename...", () => PromptForRename(deck)),
+            Ui.Item("Copy name", () => Ui.Copy(this, deck.Name, _context.Toast, "Deck name")),
+            Ui.Divider(),
+            Ui.Item("Delete...", () => ConfirmDelete(deck), cls: "danger"));
+    }
+
+    /// <summary>Renaming a deck. Library.RenameDeck existed from the start but had
+    /// no way to reach it, so a mistyped deck name could only be deleted.</summary>
+    private void PromptForRename(Deck deck)
+    {
+        var name = new TextBox { Text = deck.Name };
+        var error = Ui.Text("", 12, Ui.Danger);
+
+        _body.Content = Ui.Pad(Ui.Stack(16,
+            Ui.Heading("COLLECTIONS", "Rename this deck.", "Its words and filter stay as they are."),
+            name,
+            error,
+            Ui.Row(12,
+                Ui.Button("Cancel", Refresh, "outline"),
+                Ui.Button("Rename", () =>
+                {
+                    var value = name.Text?.Trim() ?? "";
+                    if (value.Length == 0) { error.Text = "Name the deck."; return; }
+                    if (value == deck.Name) { Refresh(); return; }
+                    if (_context.Library.Decks().Any(d => d.Name == value))
+                    { error.Text = "A deck already has that name."; return; }
+
+                    _context.Library.RenameDeck(deck.Id, value);
+                    _context.Toast("Deck renamed.");
+                }, "primary"))), 34);
+
+        name.Focus();
     }
 
     private void PromptForDeck()

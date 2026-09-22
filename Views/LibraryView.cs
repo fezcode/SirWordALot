@@ -32,6 +32,23 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
     private long? _selected;
     private bool _loading;
 
+    private readonly HashSet<long> _checked = [];
+    private readonly Border _selectionBar = new()
+    {
+        Background = Avalonia.Media.Brush.Parse("#E4E8D8"),
+        BorderBrush = Ui.Line,
+        BorderThickness = new Thickness(0, 1, 0, 1),
+        Padding = new Thickness(16, 10),
+        IsVisible = false,
+    };
+
+    /// <summary>True while the list shows checkboxes and a bulk action bar.</summary>
+    public bool SelectMode { get; private set; }
+
+    /// <summary>The words currently ticked. Always a subset of what is on screen:
+    /// anything filtered away or deleted is dropped on the next refresh.</summary>
+    public IReadOnlyCollection<long> Checked => _checked;
+
     public TextBox SearchBox { get; } = new() { Watermark = "Search words and sentences…" };
     public ContentControl Detail { get; } = new();
     public IReadOnlyList<SearchHit> Hits { get; private set; } = [];
@@ -65,11 +82,12 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
             Ui.Columns("*,8,Auto", SearchBox, new Border(), Ui.Button("+ Word", NewWord, "primary")),
             Ui.Columns("*,8,*", _sort, new Border(), _partOfSpeech),
             Ui.Columns("*,8,*", _tag, new Border(), _mastery),
-            saveAsDeck);
+            Ui.Columns("*,8,Auto", saveAsDeck, new Border(), Ui.Button("Select", ToggleSelectMode, "outline")));
         toolbar.Margin = new Thickness(16, 16, 16, 14);
 
-        var listColumn = Ui.Rows("Auto,*,40",
+        var listColumn = Ui.Rows("Auto,Auto,*,40",
             toolbar,
+            _selectionBar,
             Ui.Scroll(_list),
             new Border
             {
@@ -132,8 +150,16 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
         ReloadChoices();
 
         Hits = _context.Search.Run(Filter, DateTime.UtcNow);
+
+        // A tick only means anything while the word is on screen; filtering it away
+        // or deleting it must not leave it silently selected for a bulk action.
+        _checked.IntersectWith(Hits.Select(h => h.Entry.Id));
+
         _list.Children.Clear();
-        _count.Text = $"{Hits.Count:00} WORDS  ·  {_preset.ToUpperInvariant()}";
+        _count.Text = SelectMode && _checked.Count > 0
+            ? $"{_checked.Count:00} OF {Hits.Count:00} SELECTED"
+            : $"{Hits.Count:00} WORDS  ·  {_preset.ToUpperInvariant()}";
+        RenderSelectionBar();
 
         foreach (var hit in Hits)
         {
@@ -147,17 +173,41 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
                     Ui.Label(hit.Entry.PartOfSpeech?.ToUpperInvariant() ?? "—"),
                     Ui.MasteryBar(hit.MasteryPercent)));
 
-            var row = Ui.Columns("*,Auto", left,
-                Ui.Label(hit.DueUtc <= DateTime.UtcNow
-                    ? "DUE"
-                    : hit.DueUtc.ToString("dd MMM").ToUpperInvariant()));
+            var due = Ui.Label(hit.DueUtc <= DateTime.UtcNow
+                ? "DUE"
+                : hit.DueUtc.ToString("dd MMM").ToUpperInvariant());
 
-            var button = Ui.Button("", () => Select(hit.Entry.Id));
+            var entry = hit.Entry;
+            Control row;
+
+            if (SelectMode)
+            {
+                // The checkbox is display only; the row button owns the click, so
+                // hitting anywhere on the row toggles rather than only the 16px box.
+                var box = new CheckBox
+                {
+                    IsChecked = _checked.Contains(entry.Id),
+                    IsHitTestVisible = false,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 8, 0),
+                };
+                row = Ui.Columns("Auto,*,Auto", box, left, due);
+            }
+            else
+            {
+                row = Ui.Columns("*,Auto", left, due);
+            }
+
+            var button = Ui.Button("", () =>
+            {
+                if (SelectMode) ToggleChecked(entry.Id); else Select(entry.Id);
+            });
             button.Content = row;
             button.Padding = new Thickness(16, 13);
             button.HorizontalAlignment = HorizontalAlignment.Stretch;
             button.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-            if (hit.Entry.Id == _selected) button.Classes.Add("selected");
+            button.ContextMenu = RowMenu(entry);
+            if (SelectMode ? _checked.Contains(entry.Id) : entry.Id == _selected) button.Classes.Add("selected");
 
             _list.Children.Add(button);
             _list.Children.Add(Ui.Rule(Ui.RowRule));
@@ -203,6 +253,167 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
         }
 
         _loading = false;
+    }
+
+    // ---- select mode ---------------------------------------------------
+
+    public void ToggleSelectMode()
+    {
+        SelectMode = !SelectMode;
+        _checked.Clear();
+        Refresh();
+    }
+
+    public void ToggleChecked(long entryId)
+    {
+        if (!_checked.Remove(entryId)) _checked.Add(entryId);
+        Refresh();
+    }
+
+    public void SelectAll()
+    {
+        foreach (var hit in Hits) _checked.Add(hit.Entry.Id);
+        Refresh();
+    }
+
+    public void SelectNone()
+    {
+        _checked.Clear();
+        Refresh();
+    }
+
+    private void RenderSelectionBar()
+    {
+        _selectionBar.IsVisible = SelectMode;
+        if (!SelectMode) return;
+
+        var count = _checked.Count;
+        var all = Hits.Count > 0 && Hits.All(h => _checked.Contains(h.Entry.Id));
+
+        // Five buttons and a label do not fit across a 390px column, so the label
+        // sits above them rather than being squeezed to "03 SEL".
+        var actions = Ui.Row(6,
+            Ui.Button(all ? "None" : "All", () => { if (all) SelectNone(); else SelectAll(); }, "outline"),
+            Ui.Button("Star", () => BulkStar(true), "outline"),
+            Ui.Button("Archive", () => BulkArchive(true), "outline"),
+            Ui.Button("Delete", ConfirmBulkDelete, "outline"),
+            Ui.Button("Done", ToggleSelectMode, "outline"));
+
+        foreach (var button in actions.Children.OfType<Button>())
+        {
+            button.Padding = new Thickness(10, 0);
+            button.MinHeight = 32;
+        }
+        foreach (var button in actions.Children.OfType<Button>().Skip(1).Take(3))
+            button.IsEnabled = count > 0;
+
+        _selectionBar.Child = Ui.Stack(9,
+            Ui.Label(count == 0
+                ? "SELECT MODE  ·  TAP ROWS TO CHOOSE"
+                : $"{count:00} OF {Hits.Count:00} SELECTED"),
+            actions);
+    }
+
+    private long[] Chosen() => _checked.ToArray();
+
+    private void BulkStar(bool starred)
+    {
+        var ids = Chosen();
+        foreach (var id in ids) _context.Library.SetStarred(id, starred);
+        _context.Toast($"{ids.Length} word(s) starred.");
+    }
+
+    private void BulkArchive(bool archived)
+    {
+        var ids = Chosen();
+        foreach (var id in ids) _context.Library.SetArchived(id, archived);
+        _checked.Clear();
+        _context.Toast($"{ids.Length} word(s) archived.");
+    }
+
+    /// <summary>Bulk delete asks first and names the count. Deleting a list of words
+    /// takes their sentences, relations and review history with them.</summary>
+    private void ConfirmBulkDelete()
+    {
+        var ids = Chosen();
+        if (ids.Length == 0) return;
+
+        var names = Hits.Where(h => _checked.Contains(h.Entry.Id)).Select(h => h.Entry.Headword).ToList();
+        var preview = string.Join(", ", names.Take(8)) + (names.Count > 8 ? $", and {names.Count - 8} more" : "");
+
+        Detail.Content = Ui.Pad(Ui.Stack(18,
+            Ui.Heading("LIBRARY MANAGEMENT", $"Remove {ids.Length} words?",
+                "Their sentences, relations and review history go with them. This cannot be undone."),
+            Ui.Text(preview, 13, Ui.Muted),
+            Ui.Row(12,
+                Ui.Button("Keep them", () => Detail.Content = Placeholder(), "outline"),
+                Ui.Button($"Delete {ids.Length}", () =>
+                {
+                    foreach (var id in ids) _context.Library.DeleteEntry(id);
+                    _checked.Clear();
+                    _context.Toast($"{ids.Length} word(s) deleted.");
+                    Detail.Content = Placeholder();
+                }, "primary"))), 30);
+    }
+
+    /// <summary>Right-click CRUD on a word, so the common edits do not require
+    /// opening the detail pane first.</summary>
+    public ContextMenu RowMenu(Entry entry)
+    {
+        var decks = _context.Library.Decks();
+
+        var deckItems = decks
+            .Where(d => d.FilterJson is not { Length: > 0 })
+            .Select(deck =>
+            {
+                var already = _context.Library.DeckEntries(deck.Id).Any(e => e.Id == entry.Id);
+                return (Control)Ui.Item(deck.Name, () =>
+                {
+                    _context.Library.AddToDeck(deck.Id, entry.Id);
+                    _context.Toast($"Added to {deck.Name}.");
+                }, enabled: !already);
+            })
+            .ToArray();
+
+        return Ui.Menu(
+            Ui.Item("Open", () => Select(entry.Id)),
+            Ui.Item("Quiz this word",
+                () => _context.Navigate("quiz", new ReviewScope(ScopeKind.Single, EntryId: entry.Id))),
+            Ui.Divider(),
+            Ui.Item(entry.Starred ? "Unstar" : "Star",
+                () => _context.Library.SetStarred(entry.Id, !entry.Starred)),
+            Ui.Item(entry.Archived ? "Unarchive" : "Archive", () =>
+            {
+                _context.Library.SetArchived(entry.Id, !entry.Archived);
+                _context.Toast(entry.Archived ? "Word restored." : "Word archived.");
+            }),
+            Ui.Submenu("Add to deck", deckItems),
+            Ui.Divider(),
+            Ui.Item("Look this word up", () => _context.Navigate("lookup", entry.Headword)),
+            Ui.Item("Copy headword", () => Ui.Copy(this, entry.Headword, _context.Toast, "Headword")),
+            Ui.Divider(),
+            Ui.Item("Delete...", () => ConfirmDelete(entry), cls: "danger"));
+    }
+
+    /// <summary>Deleting from the list still asks, using the same inline confirm
+    /// panel as the detail pane rather than a modal.</summary>
+    private void ConfirmDelete(Entry entry)
+    {
+        _selected = entry.Id;
+
+        Detail.Content = Ui.Pad(Ui.Stack(18,
+            Ui.Heading("LIBRARY MANAGEMENT", "Remove this word?",
+                "Its sentences, relations and review history go with it. This cannot be undone."),
+            Ui.Display(entry.Headword, 24),
+            Ui.Row(12,
+                Ui.Button("Keep it", () => Select(entry.Id), "outline"),
+                Ui.Button("Delete", () =>
+                {
+                    _context.Library.DeleteEntry(entry.Id);
+                    _context.Toast("Word deleted.");
+                    _selected = null;
+                    Detail.Content = Placeholder();
+                }, "primary"))), 30);
     }
 
     public void Select(long entryId)
