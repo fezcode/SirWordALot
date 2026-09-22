@@ -33,6 +33,41 @@ public class OfflineDictionaryTests
         Assert.True(Dictionary.Contains("Book"));
     }
 
+    // Each British spelling below is absent from the source while its American
+    // form is present, so these genuinely exercise the fallback rather than
+    // resolving directly.
+    [Theory]
+    [InlineData("colour", "color")]
+    [InlineData("honour", "honor")]
+    [InlineData("favour", "favor")]
+    [InlineData("labour", "labor")]
+    [InlineData("analyse", "analyze")]
+    [InlineData("organise", "organize")]
+    [InlineData("theatre", "theater")]
+    public void BritishSpellingsFallBackToTheAmericanEntry(string british, string american)
+    {
+        var viaBritish = Dictionary.Translate(british);
+        Assert.NotEmpty(viaBritish);
+        Assert.Equal(Dictionary.Translate(american), viaBritish);
+    }
+
+    [Fact]
+    public void TheFallbackDoesNotInventEntriesForWordsTheSourceLacks()
+    {
+        // The source is a finite dictionary and misses some ordinary words; the
+        // fallback must not paper over that with a wrong match.
+        Assert.Empty(Dictionary.Translate("candour"));
+        Assert.Empty(Dictionary.Translate("candor"));
+    }
+
+    [Fact]
+    public void AKnownWordIsNotDisturbedByTheSpellingFallback()
+    {
+        // "core" ends in -re but is itself a headword, so it must not resolve to "coer".
+        Assert.NotEmpty(Dictionary.Translate("core"));
+        Assert.Equal(Dictionary.Translate("core"), Dictionary.Translate("CORE"));
+    }
+
     [Fact]
     public void AnUnknownWordReturnsNothingRatherThanThrowing()
     {

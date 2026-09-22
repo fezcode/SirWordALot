@@ -54,7 +54,16 @@ internal static class Program
         Render(window, Path.Combine(folder, "entry.png"));
         Console.WriteLine("  wrote entry.png");
 
-        RenderIcon(Path.Combine(folder, "icon.png"));
+        // Several sizes so the .ico is crisp in the taskbar rather than a
+        // downscaled 256. The border thins and the mark grows as size drops,
+        // because a 6px frame at 16px would swallow the glyph.
+        foreach (var size in new[] { 16, 24, 32, 48, 64, 128, 256 })
+        {
+            RenderIcon(Path.Combine(folder, $"icon-{size}.png"), size);
+            Console.WriteLine($"  wrote icon-{size}.png");
+        }
+
+        RenderIcon(Path.Combine(folder, "icon.png"), 256);
         Console.WriteLine("  wrote icon.png");
 
         window.Close();
@@ -76,23 +85,26 @@ internal static class Program
         target.Save(stream);
     }
 
-    private static void RenderIcon(string path)
+    private static void RenderIcon(string path, int size)
     {
+        var border = size <= 32 ? 0 : Math.Max(1.0, size / 42.0);
+        var mark = size * (size <= 32 ? 0.88 : 0.67);
+
         var panel = new Border
         {
-            Width = 256,
-            Height = 256,
+            Width = size,
+            Height = size,
             Background = Ui.Cream,
             BorderBrush = Ui.WindowBorder,
-            BorderThickness = new Thickness(6),
-            Child = new Glyph("word") { Width = 150, Height = 150 },
+            BorderThickness = new Thickness(border),
+            Child = new Glyph("crest") { Width = mark, Height = mark },
         };
 
-        panel.Measure(new Size(256, 256));
-        panel.Arrange(new Rect(0, 0, 256, 256));
+        panel.Measure(new Size(size, size));
+        panel.Arrange(new Rect(0, 0, size, size));
         panel.UpdateLayout();
 
-        var target = new RenderTargetBitmap(new PixelSize(256, 256), new Vector(96, 96));
+        var target = new RenderTargetBitmap(new PixelSize(size, size), new Vector(96, 96));
         target.Render(panel);
 
         using var stream = File.Create(path);

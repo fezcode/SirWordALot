@@ -18,6 +18,11 @@ public class App : Application
             var library = new Library(db);
             var settings = new Settings(db);
             Motion.Enabled = settings.Motion;
+
+            // A first run with nothing in it gives you nothing to do. Seeds only
+            // when the library is genuinely empty, so it never surprises a
+            // returning user with words they did not choose.
+            StarterLibrary.SeedIfEmpty(library);
             desktop.MainWindow = new MainWindow(library, settings, new Search(db), new Stats(db), new Lookup());
         }
 

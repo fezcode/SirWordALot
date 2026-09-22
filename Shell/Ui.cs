@@ -296,6 +296,12 @@ public sealed class Glyph(string kind) : Control
         ["export"] = "M12,15 L12,3 M7,8 L12,3 L17,8 M3,20 L21,20",
         ["sound"] = "M4,9 L8,9 L13,5 L13,19 L8,15 L4,15 Z M17,8 A6,6 0 0 1 17,16",
         ["word"] = "M4,20 L9,4 L11,4 L16,20 M6.5,14 L13.5,14 M19,9 L19,20",
+        // The app mark: a crown for "Sir" over a W for "Word-a-lot". Drawn on the
+        // same 24-unit grid as every other glyph so it keeps the line weight.
+        // The W is narrower than the crown and its middle vertex reaches back up to
+        // cap height, or it reads as a second crown rather than a letter.
+        ["crest"] = "M4.5,10.5 L4.5,3.8 L8.6,7.8 L12,2.4 L15.4,7.8 L19.5,3.8 L19.5,10.5 Z " +
+                    "M7,12.9 L9.5,21.6 L12,16.2 L14.5,21.6 L17,12.9",
     };
 
     public override void Render(DrawingContext context)

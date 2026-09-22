@@ -87,7 +87,9 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
         };
 
         Detail.Content = Placeholder();
-        Content = Ui.Columns("360,*", listBorder, Detail);
+        // 390 rather than 360: at the narrower width "Any part of speech" clipped
+        // against real font metrics, which the headless render did not show.
+        Content = Ui.Columns("390,*", listBorder, Detail);
 
         SearchBox.TextChanged += (_, _) => Refresh();
         _sort.SelectionChanged += (_, _) => Refresh();

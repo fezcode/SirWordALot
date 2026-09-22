@@ -39,10 +39,35 @@ public sealed class OfflineDictionary
         _headwords = headwords;
     }
 
-    public IReadOnlyList<string> Translate(string word) =>
-        _byWord.GetValueOrDefault(Normalize(word)) ?? [];
+    public IReadOnlyList<string> Translate(string word)
+    {
+        foreach (var candidate in Spellings(Normalize(word)))
+            if (_byWord.TryGetValue(candidate, out var translations)) return translations;
+        return [];
+    }
 
-    public bool Contains(string word) => _byWord.ContainsKey(Normalize(word));
+    public bool Contains(string word) => Translate(word).Count > 0;
+
+    /// <summary>The word, then its American spelling. The source dictionary is
+    /// American, so "candour" would otherwise miss "candor" entirely.</summary>
+    private static IEnumerable<string> Spellings(string word)
+    {
+        yield return word;
+
+        if (word.EndsWith("our")) yield return word[..^3] + "or";
+        if (word.EndsWith("ours")) yield return word[..^4] + "ors";
+        if (word.EndsWith("ise")) yield return word[..^3] + "ize";
+        if (word.EndsWith("ised")) yield return word[..^4] + "ized";
+        if (word.EndsWith("ising")) yield return word[..^5] + "izing";
+        if (word.EndsWith("isation")) yield return word[..^7] + "ization";
+        if (word.EndsWith("yse")) yield return word[..^3] + "yze";
+        if (word.EndsWith("re") && word.Length > 4) yield return word[..^2] + "er";
+        if (word.EndsWith("ogue")) yield return word[..^4] + "og";
+        if (word.Contains("ae")) yield return word.Replace("ae", "e");
+        if (word.Contains("oe")) yield return word.Replace("oe", "e");
+        if (word.EndsWith("lled")) yield return word[..^4] + "led";
+        if (word.EndsWith("lling")) yield return word[..^5] + "ling";
+    }
 
     /// <summary>Headwords beginning with <paramref name="prefix"/>, in order. Backed by
     /// a binary search over the sorted headword list rather than a scan.</summary>

@@ -146,7 +146,38 @@ internal static class Program
         Expect("status counts words", true, window.StatusRight.Text!.Contains("1 WORDS"));
         Expect("status shows online", true, window.StatusRight.Text!.Contains("ONLINE"));
 
+        CheckResizeEdges(window);
+
         window.Close();
+    }
+
+    /// <summary>A frameless window has no platform resize border, so every edge and
+    /// corner is hit-tested by hand. These assert the zones rather than trusting them.</summary>
+    private static void CheckResizeEdges(MainWindow window)
+    {
+        var w = window.Width;
+        var h = window.Height;
+
+        Expect("resize NW", WindowEdge.NorthWest, window.ResizeEdgeAt(new Point(2, 2)));
+        Expect("resize NE", WindowEdge.NorthEast, window.ResizeEdgeAt(new Point(w - 2, 2)));
+        Expect("resize SW", WindowEdge.SouthWest, window.ResizeEdgeAt(new Point(2, h - 2)));
+        Expect("resize SE", WindowEdge.SouthEast, window.ResizeEdgeAt(new Point(w - 2, h - 2)));
+
+        Expect("resize W", WindowEdge.West, window.ResizeEdgeAt(new Point(2, h / 2)));
+        Expect("resize E", WindowEdge.East, window.ResizeEdgeAt(new Point(w - 2, h / 2)));
+        Expect("resize N", WindowEdge.North, window.ResizeEdgeAt(new Point(w / 2, 2)));
+        Expect("resize S", WindowEdge.South, window.ResizeEdgeAt(new Point(w / 2, h - 2)));
+
+        Expect("interior does not resize", null, window.ResizeEdgeAt(new Point(w / 2, h / 2)));
+        Expect("just inside the edge does not resize", null, window.ResizeEdgeAt(new Point(20, h / 2)));
+        Expect("outside does not resize", null, window.ResizeEdgeAt(new Point(-5, h / 2)));
+
+        // The top edge must win over the titlebar's drag handler.
+        Expect("top edge beats the titlebar", WindowEdge.North, window.ResizeEdgeAt(new Point(300, 1)));
+
+        window.WindowState = WindowState.Maximized;
+        Expect("maximized does not resize", null, window.ResizeEdgeAt(new Point(2, 2)));
+        window.WindowState = WindowState.Normal;
     }
 
     // ---- views ---------------------------------------------------------

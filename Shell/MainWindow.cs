@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -97,6 +98,8 @@ public sealed class MainWindow : Window
             Child = new Panel { Children = { root, _overlay } },
         };
 
+        EnableEdgeResize();
+
         Activated += (_, _) => Titlebar.Background = Ui.TitlebarActive;
         Deactivated += (_, _) => Titlebar.Background = Ui.TitlebarInactive;
         library.Changed += UpdateStatus;
@@ -135,7 +138,7 @@ public sealed class MainWindow : Window
     private Border BuildTitlebar()
     {
         var title = Ui.Label("SIR WORD-A-LOT", Ui.Ink);
-        var left = Ui.Row(12, new Glyph("word") { Width = 16, Height = 16 }, title);
+        var left = Ui.Row(12, new Glyph("crest") { Width = 17, Height = 17 }, title);
         left.Margin = new Thickness(16, 0);
 
         var buttons = Ui.Row(0,
@@ -166,6 +169,73 @@ public sealed class MainWindow : Window
 
         static bool IsTitleButton(object? source) =>
             source is Visual visual && visual.GetSelfAndVisualAncestors().OfType<Button>().Any();
+    }
+
+    /// <summary>How close to an edge counts as grabbing it. Windows itself uses
+    /// roughly this, and anything smaller is fiddly to hit.</summary>
+    private const double ResizeMargin = 6;
+
+    private static readonly Dictionary<WindowEdge, Cursor> ResizeCursors = new()
+    {
+        [WindowEdge.North] = new Cursor(StandardCursorType.SizeNorthSouth),
+        [WindowEdge.South] = new Cursor(StandardCursorType.SizeNorthSouth),
+        [WindowEdge.West] = new Cursor(StandardCursorType.SizeWestEast),
+        [WindowEdge.East] = new Cursor(StandardCursorType.SizeWestEast),
+        [WindowEdge.NorthWest] = new Cursor(StandardCursorType.TopLeftCorner),
+        [WindowEdge.NorthEast] = new Cursor(StandardCursorType.TopRightCorner),
+        [WindowEdge.SouthWest] = new Cursor(StandardCursorType.BottomLeftCorner),
+        [WindowEdge.SouthEast] = new Cursor(StandardCursorType.BottomRightCorner),
+    };
+
+    /// <summary>A frameless window gets no resize border from the platform, so every
+    /// edge and corner is hit-tested here instead. Without this the only way to
+    /// resize is the corner grip, which is not how a window is expected to behave.</summary>
+    private void EnableEdgeResize()
+    {
+        PointerMoved += (_, e) =>
+        {
+            if (Content is not Border frame) return;
+            var edge = ResizeEdgeAt(e.GetPosition(this));
+            frame.Cursor = edge is { } value ? ResizeCursors[value] : Cursor.Default;
+        };
+
+        // Tunnelling so an edge beats whatever control happens to sit under it,
+        // including the titlebar's drag handler along the top edge.
+        AddHandler(PointerPressedEvent, (_, e) =>
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+            if (ResizeEdgeAt(e.GetPosition(this)) is not { } edge) return;
+
+            BeginResizeDrag(edge, e);
+            e.Handled = true;
+        }, RoutingStrategies.Tunnel);
+    }
+
+    /// <summary>The edge a point grabs, or null for the interior. Null throughout
+    /// while maximized, where dragging an edge would be meaningless.</summary>
+    public WindowEdge? ResizeEdgeAt(Point point)
+    {
+        if (WindowState != WindowState.Normal) return null;
+
+        var left = point.X <= ResizeMargin;
+        var right = point.X >= Bounds.Width - ResizeMargin;
+        var top = point.Y <= ResizeMargin;
+        var bottom = point.Y >= Bounds.Height - ResizeMargin;
+
+        if (point.X < 0 || point.Y < 0 || point.X > Bounds.Width || point.Y > Bounds.Height) return null;
+
+        return (left, right, top, bottom) switch
+        {
+            (true, _, true, _) => WindowEdge.NorthWest,
+            (_, true, true, _) => WindowEdge.NorthEast,
+            (true, _, _, true) => WindowEdge.SouthWest,
+            (_, true, _, true) => WindowEdge.SouthEast,
+            (true, _, _, _) => WindowEdge.West,
+            (_, true, _, _) => WindowEdge.East,
+            (_, _, true, _) => WindowEdge.North,
+            (_, _, _, true) => WindowEdge.South,
+            _ => null,
+        };
     }
 
     private void ToggleMaximize() =>
