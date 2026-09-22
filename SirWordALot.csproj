@@ -5,10 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>SirWordALot</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Company>Fezcode</Company>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/SirWordALot.ico</ApplicationIcon>
+    <!-- Symbols go inside the executable rather than beside it, so a release
+         payload is one file and no .pdb ships next to the app. -->
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tools/**;tests/**" />

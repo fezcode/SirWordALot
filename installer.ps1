@@ -77,6 +77,28 @@ if ($binaryVersion -notmatch "^$([regex]::Escape($version))") {
     throw "Published binary is $binaryVersion but Forge expects $version. Run build.ps1 first."
 }
 
+# A release payload ships no loose debug symbols.
+$symbols = @(Get-ChildItem -LiteralPath $distApp -Filter '*.pdb' -File -ErrorAction SilentlyContinue)
+if ($symbols.Count) {
+    throw "Payload contains $($symbols.Count) .pdb file(s). Release builds use DebugType=embedded."
+}
+
+# Every shortcut icon must be a path the installer actually writes, or the
+# shortcut renders blank. Forge dedups [[files]] against [app] icon by source
+# path, which has silently dropped an app.ico copy before.
+$manifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'forge.toml') -Raw
+$written = @('${INSTALLDIR}/SirWordALot.exe')
+foreach ($line in [regex]::Matches($manifest, '(?m)^\s*dst\s*=\s*"([^"]+)"')) {
+    $written += $line.Groups[1].Value
+}
+foreach ($icon in [regex]::Matches($manifest, '(?m)^\s*icon\s*=\s*"(\$\{INSTALLDIR\}[^"]+)"')) {
+    $path = $icon.Groups[1].Value
+    if ($written -notcontains $path) {
+        throw "Shortcut icon $path is never written by the installer. It would render blank."
+    }
+}
+Write-Host "  payload ok: no symbols, shortcut icons resolve" -ForegroundColor DarkGray
+
 Write-Host "`n[3/4] Ensuring a GUI-subsystem forge.exe..." -ForegroundColor Cyan
 if (-not (Test-Path $forgeGui))    { throw "Missing $forgeGui. Run 'gobake build' in $forgeRoot first." }
 if (-not (Test-Path $uninstaller)) { throw "Missing $uninstaller. Run 'gobake build' in $forgeRoot first." }
