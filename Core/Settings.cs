@@ -74,6 +74,12 @@ public sealed class Settings(Db db)
         set => Set("lookup_enabled", value.ToString());
     }
 
+    public bool HisashiMenus
+    {
+        get => GetBool("hisashi_menus", true);
+        set => Set("hisashi_menus", value.ToString());
+    }
+
     public string BackupFolder
     {
         get => Get("backup_folder", Path.Combine(Db.DataRoot(), "backups"));

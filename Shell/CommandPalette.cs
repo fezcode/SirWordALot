@@ -32,15 +32,17 @@ public static class CommandPalette
         entries.Add(new PaletteEntry("Start a quiz", "Action", () => context.Navigate("quiz", null)));
         entries.Add(new PaletteEntry("Look up a word", "Action", () => context.Navigate("lookup", null)));
         entries.Add(new PaletteEntry("Export the library", "Action", () => context.Navigate("settings", null)));
-        entries.Add(new PaletteEntry("Back up now", "Action", () =>
-        {
-            var backups = new Backups(context.Settings.BackupFolder);
-            var path = backups.Write(context.Library, DateTime.UtcNow);
-            backups.Prune();
-            context.Toast($"Snapshot written to {path}.");
-        }));
+        entries.Add(new PaletteEntry("Back up now", "Action", () => BackUpNow(context)));
 
         return entries;
+    }
+
+    public static void BackUpNow(ShellContext context)
+    {
+        var backups = new Backups(context.Settings.BackupFolder);
+        var path = backups.Write(context.Library, DateTime.UtcNow);
+        backups.Prune();
+        context.Toast($"Snapshot written to {path}.");
     }
 
     public static IReadOnlyList<PaletteEntry> Filter(IReadOnlyList<PaletteEntry> entries, string query) =>

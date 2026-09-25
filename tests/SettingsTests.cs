@@ -19,6 +19,7 @@ public class SettingsTests
         Assert.True(settings.CaptureEnabled);
         Assert.True(settings.LookupEnabled);
         Assert.Null(settings.WindowBounds);
+        Assert.True(settings.HisashiMenus);
         Assert.EndsWith("backups", settings.BackupFolder);
     }
 

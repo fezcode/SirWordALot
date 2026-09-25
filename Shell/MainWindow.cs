@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -57,6 +58,7 @@ public sealed class MainWindow : Window
     private readonly TextBlock _statusRight = Ui.Label("");
 
     private Capture? _capture;
+    private HisashiMenubar? _hisashi;
 
     public IReadOnlyList<NavItem> Nav => Items;
 
@@ -127,6 +129,8 @@ public sealed class MainWindow : Window
         Opened += (_, _) =>
         {
             _capture = new Capture(this, _settings, CaptureWord);
+            // hoswl is a Windows named pipe; Hisashi only exists there.
+            if (OperatingSystem.IsWindows()) _hisashi = new HisashiMenubar(this, _context);
             if (_settings.CaptureEnabled && !_capture.TryRegister())
                 ShowToast($"The {_settings.CaptureHotkey} hotkey is taken by another program.");
 
@@ -142,11 +146,17 @@ public sealed class MainWindow : Window
             }
         };
 
+        // Position is gone by the time Closed fires, so bounds are tracked
+        // while the window is live and written out as it starts to close.
+        PositionChanged += (_, _) => TrackNormalBounds();
+        Resized += (_, _) => TrackNormalBounds();
+        Closing += (_, _) => SaveBounds();
+
         Closed += (_, _) =>
         {
             library.Changed -= UpdateStatus;
-            SaveBounds();
             _capture?.Dispose();
+            _hisashi?.Dispose();
             foreach (var view in _views.Values) (view as IDisposable)?.Dispose();
         };
 
@@ -405,7 +415,22 @@ public sealed class MainWindow : Window
 
         Motion.Enter(view, 8);
         UpdateStatus();
+        _hisashi?.Refresh();
     }
+
+    public void FocusSearch()
+    {
+        Navigate("library");
+        (Host.Content as LibraryView)?.FocusSearch();
+    }
+
+    public void BeginNewWord()
+    {
+        Navigate("library");
+        (Host.Content as LibraryView)?.BeginNewWord();
+    }
+
+    public void ShowCommandPalette() => CommandPalette.Show(_overlay, _context, Items);
 
     private Control Build(string id) => id switch
     {
@@ -439,7 +464,7 @@ public sealed class MainWindow : Window
     {
         if (e.Key == Key.Space && e.KeyModifiers == KeyModifiers.Control)
         {
-            CommandPalette.Show(_overlay, _context, Items);
+            ShowCommandPalette();
             e.Handled = true;
             return;
         }
@@ -452,13 +477,11 @@ public sealed class MainWindow : Window
         switch (e.Key)
         {
             case Key.OemQuestion or Key.Divide:
-                Navigate("library");
-                (Host.Content as LibraryView)?.FocusSearch();
+                FocusSearch();
                 e.Handled = true;
                 break;
             case Key.N:
-                Navigate("library");
-                (Host.Content as LibraryView)?.BeginNewWord();
+                BeginNewWord();
                 e.Handled = true;
                 break;
             case Key.Q:
@@ -468,26 +491,66 @@ public sealed class MainWindow : Window
         }
     }
 
+    // Stored as "x,y,width,height[,max]": the restored (not maximised) rectangle,
+    // with the position in physical pixels and the size in DIPs, as Avalonia uses them.
+    private PixelPoint? _normalPosition;
+    private Size _normalSize;
+    private bool _restoring;
+
+    private void TrackNormalBounds()
+    {
+        if (_restoring || WindowState != WindowState.Normal) return;
+        _normalPosition = Position;
+        _normalSize = new Size(Width, Height);
+    }
+
     private void RestoreBounds()
     {
         if (_settings.WindowBounds is not { } stored) return;
         var parts = stored.Split(',');
-        if (parts.Length != 4) return;
-        if (!double.TryParse(parts[2], out var width) || !double.TryParse(parts[3], out var height)) return;
+        if (parts.Length is not (4 or 5)) return;
+        var invariant = CultureInfo.InvariantCulture;
+        if (!int.TryParse(parts[0], NumberStyles.Integer, invariant, out var x) ||
+            !int.TryParse(parts[1], NumberStyles.Integer, invariant, out var y) ||
+            !double.TryParse(parts[2], NumberStyles.Float, invariant, out var width) ||
+            !double.TryParse(parts[3], NumberStyles.Float, invariant, out var height)) return;
 
+        _restoring = true;
         Width = Math.Max(MinWidth, width);
         Height = Math.Max(MinHeight, height);
 
-        if (double.TryParse(parts[0], out var x) && double.TryParse(parts[1], out var y))
+        // A monitor that was unplugged since last time would strand the window
+        // off-screen; fall back to centring unless the titlebar lands on a screen.
+        var position = new PixelPoint(x, y);
+        if (IsOnScreen(position))
         {
             WindowStartupLocation = WindowStartupLocation.Manual;
-            Position = new PixelPoint((int)x, (int)y);
+            Position = position;
+            _normalPosition = position;
         }
+        _normalSize = new Size(Width, Height);
+
+        if (parts.Length == 5 && parts[4] == "max") WindowState = WindowState.Maximized;
+        _restoring = false;
+    }
+
+    private bool IsOnScreen(PixelPoint position)
+    {
+        var screens = Screens?.All;
+        if (screens is null || screens.Count == 0) return false;
+        var grip = new PixelRect(position.X + 40, position.Y + 8, 200, 24);
+        return screens.Any(screen => screen.WorkingArea.Intersects(grip));
     }
 
     private void SaveBounds()
     {
-        if (WindowState != WindowState.Normal) return;
-        _settings.WindowBounds = $"{Position.X},{Position.Y},{Width},{Height}";
+        TrackNormalBounds();
+        if (_normalPosition is not { } position) return;
+        var invariant = CultureInfo.InvariantCulture;
+        var bounds = string.Join(',',
+            position.X.ToString(invariant), position.Y.ToString(invariant),
+            _normalSize.Width.ToString(invariant), _normalSize.Height.ToString(invariant));
+        if (WindowState == WindowState.Maximized) bounds += ",max";
+        _settings.WindowBounds = bounds;
     }
 }

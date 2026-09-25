@@ -118,6 +118,9 @@ public sealed class SettingsView : UserControl
                 : "Lookup disabled. The app now makes no network calls at all.");
         };
 
+        var hisashi = new ToggleSwitch { IsChecked = settings.HisashiMenus };
+        hisashi.IsCheckedChanged += (_, _) => settings.HisashiMenus = hisashi.IsChecked == true;
+
         var stack = Ui.Stack(26,
             Ui.Heading("CONFIGURATION", "Settings.", "Everything here is stored with your library."),
             Ui.Rule(),
@@ -132,6 +135,9 @@ public sealed class SettingsView : UserControl
                 Field("Capture hotkey", "Grabs the clipboard word from anywhere.", hotkey),
                 Field("Capture enabled", "Unregisters the hotkey when off.", capture),
                 Field("Online lookup", "Datamuse and dictionaryapi.dev. Off means no network at all.", lookup)),
+            Group("INTEGRATION",
+                Field("Hisashi menubar", "Shows File and Go in Hisashi's menubar while this window is in front.",
+                    hisashi)),
             Group("DATA",
                 Field("Export", "JSON is lossless and round-trips everything.",
                     Ui.Row(10,
