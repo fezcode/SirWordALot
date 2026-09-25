@@ -23,9 +23,11 @@ public class StatsTests
     {
         var (library, stats) = Fixture();
         var a = library.AddEntry("eminence");
-        library.AddEntry("laconic");
+        var b = library.AddEntry("laconic");
         library.SaveScheduling(library.GetScheduling(a) with
         { DueUtc = Now.AddDays(-1), LastReviewedUtc = Now.AddDays(-6), IntervalDays = 5 });
+        // A new word is due from when it is added, on the real clock; pin it to the fixed one.
+        library.SaveScheduling(library.GetScheduling(b) with { DueUtc = Now });
 
         var summary = stats.Summary(Now);
         Assert.Equal(2, summary.TotalWords);
