@@ -5,5 +5,5 @@ namespace SirWordALot.Core;
 public static class Product
 {
     public const string Name = "Sir Word-a-lot";
-    public const string Version = "0.1.3";
+    public const string Version = "0.1.4";
 }

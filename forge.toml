@@ -1,6 +1,6 @@
 [app]
 name    = "Sir Word-a-lot"
-version = "0.1.3"
+version = "0.1.4"
 id      = "io.fezcode.sirwordalot"
 icon    = "Assets/SirWordALot.ico"
 
@@ -32,7 +32,7 @@ settings_dirs = ["${APPDATA}/fezcode/SirWordALot"]
 [[steps]]
 type  = "welcome"
 title = "Welcome"
-body  = "This wizard will install Sir Word-a-lot 0.1.3 on your computer.\n\nSir Word-a-lot is a vocabulary and thesaurus trainer: capture a word with the sentence you met it in, enrich it with real synonyms and examples, then meet it again on a schedule until it sticks.\n\nClick Next to continue."
+body  = "This wizard will install Sir Word-a-lot 0.1.4 on your computer.\n\nSir Word-a-lot is a vocabulary and thesaurus trainer: capture a word with the sentence you met it in, enrich it with real synonyms and examples, then meet it again on a schedule until it sticks.\n\nClick Next to continue."
 
 [[steps]]
 type  = "license"
@@ -43,7 +43,7 @@ file  = "LICENSE.txt"
 [[steps]]
 type  = "folder"
 title = "Location"
-body  = "Choose where to install Sir Word-a-lot 0.1.3."
+body  = "Choose where to install Sir Word-a-lot 0.1.4."
 
 [[steps]]
 type  = "shortcuts"
@@ -108,4 +108,4 @@ data  = "${INSTALLDIR}"
 hive  = "HKCU"
 key   = "Software\\fezcode\\SirWordALot"
 value = "Version"
-data  = "0.1.3"
+data  = "0.1.4"
