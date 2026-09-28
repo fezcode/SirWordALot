@@ -164,6 +164,9 @@ public class SearchTests
         var (library, search) = Fixture();
         var eminence = library.FindEntry("eminence")!.Id;
         library.SaveScheduling(library.GetScheduling(eminence) with { DueUtc = Now.AddDays(5) });
+        // A new word is due from when it is added, on the real clock; pin it to the fixed one.
+        var laconic = library.FindEntry("laconic")!.Id;
+        library.SaveScheduling(library.GetScheduling(laconic) with { DueUtc = Now });
 
         Assert.Equal(new[] { "eminence", "laconic" },
             search.Run(new SearchFilter(Sort: SortOrder.Alphabetic), Now).Select(h => h.Entry.Headword));
