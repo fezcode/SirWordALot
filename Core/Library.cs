@@ -25,6 +25,11 @@ public sealed class Library : IDisposable
         string.Join(' ', headword.Trim().ToLowerInvariant()
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
+    /// <summary>Supplies a translation for each new word, and for existing words
+    /// whose translation is blank. The app sets it to the bundled atlas.dict data;
+    /// left null, words are added with no translation.</summary>
+    public Func<string, string?>? Translator { get; set; }
+
     public int Count => System.Convert.ToInt32(_db.Scalar("SELECT COUNT(*) FROM entries"));
 
     public long AddEntry(string headword, string source = "manual")
@@ -38,11 +43,11 @@ public sealed class Library : IDisposable
         var now = Iso.Text(DateTime.UtcNow);
         _db.Execute(
             """
-            INSERT INTO entries (headword, normalized, source, created_utc, modified_utc)
-            VALUES ($headword, $normalized, $source, $now, $now)
+            INSERT INTO entries (headword, normalized, source, created_utc, modified_utc, translation)
+            VALUES ($headword, $normalized, $source, $now, $now, $translation)
             """,
             ("$headword", headword.Trim()), ("$normalized", normalized),
-            ("$source", source), ("$now", now));
+            ("$source", source), ("$now", now), ("$translation", Translator?.Invoke(normalized)));
 
         var id = (long)_db.Scalar("SELECT last_insert_rowid()")!;
         _db.Execute(
@@ -51,6 +56,27 @@ public sealed class Library : IDisposable
 
         Touch();
         return id;
+    }
+
+    /// <summary>Copies a translation into every entry whose own is blank, leaving
+    /// ones the user wrote alone. Returns how many were filled.</summary>
+    public int FillMissingTranslations()
+    {
+        if (Translator is null) return 0;
+
+        var filled = 0;
+        foreach (var (id, normalized) in _db.Query(
+                     "SELECT id, normalized FROM entries WHERE translation IS NULL OR trim(translation) = ''",
+                     r => (r.GetInt64(0), r.GetString(1))))
+        {
+            if (Translator(normalized) is not { } translation) continue;
+            _db.Execute("UPDATE entries SET translation = $translation WHERE id = $id",
+                ("$translation", translation), ("$id", id));
+            filled++;
+        }
+
+        if (filled > 0) Touch();
+        return filled;
     }
 
     public Entry? GetEntry(long id) =>

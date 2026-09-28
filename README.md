@@ -96,8 +96,9 @@ pollutes your retention statistics.
 ## The offline dictionary
 
 31,835 English headwords with Turkish meanings ship inside the binary, exported
-from [atlas.dict](https://github.com/fezcode/atlas.dict). They fill the
-translation field, power the Turkish section in Lookup, and back the "did you
+from [atlas.dict](https://github.com/fezcode/atlas.dict). Every word you
+add has its translation filled from them automatically, and words already in
+your library with a blank translation are filled on the next start. They power the Turkish section in Lookup, and back the "did you
 mean" suggestions when a word is not found. None of it touches the network.
 
 A caveat worth stating plainly: the source is a *translation* dictionary. Across

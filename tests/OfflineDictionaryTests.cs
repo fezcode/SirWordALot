@@ -27,6 +27,13 @@ public class OfflineDictionaryTests
     }
 
     [Fact]
+    public void TranslationForJoinsMeaningsTheWayAnEntryStoresThem()
+    {
+        Assert.Equal(string.Join(", ", Dictionary.Translate("book")), Dictionary.TranslationFor("book"));
+        Assert.Null(Dictionary.TranslationFor("zzqqxx"));
+    }
+
+    [Fact]
     public void LookupIsCaseAndWhitespaceInsensitive()
     {
         Assert.Equal(Dictionary.Translate("book"), Dictionary.Translate("  BOOK "));

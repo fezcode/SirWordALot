@@ -48,6 +48,11 @@ public sealed class OfflineDictionary
 
     public bool Contains(string word) => Translate(word).Count > 0;
 
+    /// <summary>Every meaning joined the way an entry stores them, or null when the
+    /// word is unknown. Suits <see cref="Library.Translator"/>.</summary>
+    public string? TranslationFor(string word) =>
+        Translate(word) is { Count: > 0 } meanings ? string.Join(", ", meanings) : null;
+
     /// <summary>The word, then its American spelling. The source dictionary is
     /// American, so "candour" would otherwise miss "candor" entirely.</summary>
     private static IEnumerable<string> Spellings(string word)

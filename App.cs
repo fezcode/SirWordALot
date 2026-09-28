@@ -16,7 +16,10 @@ public class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var db = Db.Open(Db.DefaultPath());
-            var library = new Library(db);
+            // Translations come straight from the bundled atlas.dict data: new words
+            // get theirs as they are added, and older blank ones are filled here.
+            var library = new Library(db) { Translator = OfflineDictionary.Instance.TranslationFor };
+            library.FillMissingTranslations();
             var settings = new Settings(db);
             Motion.Enabled = settings.Motion;
             AppTheme.Apply(settings.Theme);

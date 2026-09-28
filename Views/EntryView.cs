@@ -109,32 +109,9 @@ public sealed class EntryView : UserControl
 
     private static Control Section(string caption, Control control) => Ui.Stack(7, Ui.Label(caption), control);
 
-    /// <summary>The translation field, with a one-click fill from the offline
-    /// dictionary when it knows the word and the field is still empty.</summary>
-    private Control TranslationSection()
-    {
-        var offline = OfflineDictionary.Instance.Translate(Entry.Headword);
-
-        // The row is built once: _translation is a long-lived field, and adding it
-        // to a second Grid would re-parent it and throw.
-        Control trailing = new Border();
-
-        if (offline.Count > 0)
-        {
-            var suggestion = string.Join(", ", offline);
-            var fill = Ui.Button("Use atlas.dict", () =>
-            {
-                _context.Library.UpdateEntry(Entry with { Translation = suggestion });
-                _context.Toast("Translation filled from the offline dictionary.");
-                Render();
-            }, "outline");
-            fill.Margin = new Thickness(10, 0, 0, 0);
-            ToolTip.SetTip(fill, suggestion);
-            trailing = fill;
-        }
-
-        return Ui.Stack(7, Ui.Label("TRANSLATION"), Ui.Columns("*,Auto", _translation, trailing));
-    }
+    /// <summary>The translation field. The library fills it from the bundled
+    /// atlas.dict data when a word is added, so there is nothing to fetch here.</summary>
+    private Control TranslationSection() => Section("TRANSLATION", _translation);
 
     private Control RelationSection(RelationKind kind)
     {

@@ -16,6 +16,55 @@ public class LibraryEntryTests
         Assert.Equal(expected, Library.Normalize(input));
 
     [Fact]
+    public void AddEntryTakesItsTranslationFromTheTranslator()
+    {
+        var library = new Library(Db.OpenMemory())
+        { Translator = word => word == "eminence" ? "saygınlık, yücelik" : null };
+
+        Assert.Equal("saygınlık, yücelik", library.GetEntry(library.AddEntry("Eminence"))!.Translation);
+        Assert.Null(library.GetEntry(library.AddEntry("zzqq"))!.Translation);
+    }
+
+    [Fact]
+    public void AddEntryWithoutATranslatorLeavesTranslationEmpty()
+    {
+        var library = NewLibrary();
+        Assert.Null(library.GetEntry(library.AddEntry("eminence"))!.Translation);
+    }
+
+    [Fact]
+    public void FillMissingTranslationsFillsOnlyBlankEntries()
+    {
+        var library = NewLibrary();
+        var blank = library.AddEntry("eminence");
+        var spaces = library.AddEntry("laconic");
+        var written = library.AddEntry("ersatz");
+        var unknown = library.AddEntry("zzqq");
+        library.UpdateEntry(library.GetEntry(spaces)! with { Translation = "  " });
+        library.UpdateEntry(library.GetEntry(written)! with { Translation = "mine" });
+
+        library.Translator = word => word == "zzqq" ? null : "from atlas.dict";
+        var changes = 0;
+        library.Changed += () => changes++;
+
+        Assert.Equal(2, library.FillMissingTranslations());
+        Assert.Equal("from atlas.dict", library.GetEntry(blank)!.Translation);
+        Assert.Equal("from atlas.dict", library.GetEntry(spaces)!.Translation);
+        Assert.Equal("mine", library.GetEntry(written)!.Translation);
+        Assert.Null(library.GetEntry(unknown)!.Translation);
+        Assert.Equal(1, changes);
+        Assert.Equal(0, library.FillMissingTranslations());
+    }
+
+    [Fact]
+    public void FillMissingTranslationsWithoutATranslatorDoesNothing()
+    {
+        var library = NewLibrary();
+        library.AddEntry("eminence");
+        Assert.Equal(0, library.FillMissingTranslations());
+    }
+
+    [Fact]
     public void AddEntryStoresTheHeadwordAsTyped()
     {
         var library = NewLibrary();
