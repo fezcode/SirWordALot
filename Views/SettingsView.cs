@@ -73,6 +73,21 @@ public sealed class SettingsView : UserControl
             _context.Toast("Palette saved. It applies to accents and the console.");
         };
 
+        var themeNames = AppTheme.Names.ToArray();
+        var theme = new ComboBox { ItemsSource = themeNames, Width = 200 };
+        theme.SelectedIndex = Math.Max(0, Array.IndexOf(themeNames, AppTheme.Current.Name));
+        theme.SelectionChanged += (_, _) =>
+        {
+            if (theme.SelectedItem is not string chosen || chosen == AppTheme.Current.Name) return;
+            settings.Theme = chosen;
+            // The window is rebuilt around the new theme, so this view goes with it;
+            // defer until the dropdown has finished closing.
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (!AppTheme.Switch(chosen)) _context.Toast("Theme saved. It applies when the app next starts.");
+            });
+        };
+
         var motion = new ToggleSwitch
         { IsChecked = settings.Motion, OnContent = "Smooth", OffContent = "Reduced" };
         motion.IsCheckedChanged += (_, _) =>
@@ -125,6 +140,8 @@ public sealed class SettingsView : UserControl
             Ui.Heading("CONFIGURATION", "Settings.", "Everything here is stored with your library."),
             Ui.Rule(),
             Group("APPEARANCE",
+                Field("Theme", "Classic is the petrol institute. Braun is warm plastic, aluminium and one orange key.",
+                    theme),
                 Field("Palette", "Tints accents, the console and the heatmap.", palette),
                 Field("Motion", "Turn this off to reduce movement.", motion)),
             Group("STUDY",

@@ -63,10 +63,12 @@ public sealed class StatsView : UserControl, IDisposable
         foreach (var (bucket, count) in breakdown.OrderBy(p => p.Key))
         {
             var track = new Grid { Width = 340, HorizontalAlignment = HorizontalAlignment.Left };
-            track.Children.Add(new Border { Height = 14, Background = Ui.RowRule });
+            var radius = new CornerRadius(AppTheme.IsBraun ? 7 : 0);
+            track.Children.Add(new Border { Height = 14, CornerRadius = radius, Background = Ui.RowRule });
             track.Children.Add(new Border
             {
                 Height = 14,
+                CornerRadius = radius,
                 Background = Ui.Accent,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Width = Math.Max(1, count / (double)largest * 340),

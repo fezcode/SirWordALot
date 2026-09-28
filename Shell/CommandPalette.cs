@@ -68,6 +68,8 @@ public static class CommandPalette
             Background = Ui.Cream,
             BorderBrush = Ui.WindowBorder,
             BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(AppTheme.Current.Radius * 1.25),
+            Padding = new Thickness(0, 0, 0, AppTheme.Current.Radius / 2),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Top,
             Margin = new Thickness(0, 120, 0, 0),

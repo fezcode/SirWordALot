@@ -35,7 +35,7 @@ public sealed class LibraryView : UserControl, IDisposable, IReceivesArgument
     private readonly HashSet<long> _checked = [];
     private readonly Border _selectionBar = new()
     {
-        Background = Avalonia.Media.Brush.Parse("#E4E8D8"),
+        Background = Ui.Highlight,
         BorderBrush = Ui.Line,
         BorderThickness = new Thickness(0, 1, 0, 1),
         Padding = new Thickness(16, 10),

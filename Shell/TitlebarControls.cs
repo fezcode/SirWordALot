@@ -49,7 +49,11 @@ public sealed class TrafficLight : Button
         };
 
         Kind = kind;
-        Content = _dot;
+        // Braun's lamps are moulded domes: the same colour under a highlight.
+        Content = AppTheme.IsBraun
+            ? new Panel { Children = { _dot, BraunParts.Gloss(13) } }
+            : _dot;
+        if (AppTheme.IsBraun) { _dot.Width = _dot.Height = 13; }
         Background = Brushes.Transparent;
         BorderThickness = new Thickness(0);
         Padding = new Thickness(4, 0);
@@ -107,6 +111,14 @@ public static class TitlebarControls
             Ui.IconButton("maximize", "Maximize / restore", maximize),
             Ui.IconButton("close", "Close", close));
         row.VerticalAlignment = VerticalAlignment.Center;
+
+        // Only the Braun stylesheet styles this class, as small round keys.
+        foreach (var button in row.Children.OfType<Button>())
+        {
+            button.Classes.Add("chrome");
+            if (AppTheme.IsBraun && button.Content is Glyph glyph) glyph.Width = glyph.Height = 11;
+        }
+        if (AppTheme.IsBraun) row.Margin = new Thickness(0, 0, 8, 0);
         return row;
     }
 }

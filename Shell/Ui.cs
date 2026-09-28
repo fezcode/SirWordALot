@@ -10,37 +10,34 @@ namespace SirWordALot.Shell;
 
 public static class Ui
 {
-    public static readonly IBrush
-        Ink = Brush.Parse("#173B40"),
-        Cream = Brush.Parse("#ECEDE0"),
-        Muted = Brush.Parse("#688178"),
-        Line = Brush.Parse("#BCC8BB"),
-        Phosphor = Brush.Parse("#B3E5DA"),
-        Dark = Brush.Parse("#102C32"),
-        Sidebar = Brush.Parse("#DFE4D6"),
-        RowRule = Brush.Parse("#D8DECF"),
-        WindowBorder = Brush.Parse("#9CAEA0"),
-        TitlebarActive = Brush.Parse("#E9EBDD"),
-        TitlebarInactive = Brush.Parse("#CCD6C9"),
-        Danger = Brush.Parse("#99513D"),
-        Accent = Brush.Parse("#4E8A7B");
+    // Read through to the current theme, so a control built after a switch picks
+    // up the new colours without any view knowing that themes exist.
+    public static IBrush Ink => AppTheme.Current.Ink;
+    public static IBrush Cream => AppTheme.Current.Cream;
+    public static IBrush Muted => AppTheme.Current.Muted;
+    public static IBrush Line => AppTheme.Current.Line;
+    public static IBrush Phosphor => AppTheme.Current.Phosphor;
+    public static IBrush Dark => AppTheme.Current.Dark;
+    public static IBrush Sidebar => AppTheme.Current.Sidebar;
+    public static IBrush RowRule => AppTheme.Current.RowRule;
+    public static IBrush WindowBorder => AppTheme.Current.WindowBorder;
+    public static IBrush TitlebarActive => AppTheme.Current.TitlebarActive;
+    public static IBrush TitlebarInactive => AppTheme.Current.TitlebarInactive;
+    public static IBrush Danger => AppTheme.Current.Danger;
+    public static IBrush Accent => AppTheme.Current.Accent;
+    public static IBrush ChipFill => AppTheme.Current.ChipFill;
+    public static IBrush Highlight => AppTheme.Current.Highlight;
+    public static IBrush OnPrimary => AppTheme.Current.OnPrimary;
+    public static IBrush OnPrimaryMuted => AppTheme.Current.OnPrimaryMuted;
 
-    // Traffic lights in this palette rather than the system red/amber/green.
-    // Terracotta, ochre and sage keep the same earthy register as the rest,
-    // while staying distinguishable from one another at 12px.
-    public static readonly IBrush
-        SignalClose = Brush.Parse("#99513D"),
-        SignalMinimize = Brush.Parse("#A8894E"),
-        SignalMaximize = Brush.Parse("#4E8A7B"),
-        SignalIdle = Brush.Parse("#B7C1B6");
+    // Traffic lights in the theme's palette rather than the system red/amber/green.
+    public static IBrush SignalClose => AppTheme.Current.SignalClose;
+    public static IBrush SignalMinimize => AppTheme.Current.SignalMinimize;
+    public static IBrush SignalMaximize => AppTheme.Current.SignalMaximize;
+    public static IBrush SignalIdle => AppTheme.Current.SignalIdle;
 
-    // The first name that exists wins, so Windows keeps Cascadia and Georgia
-    // while macOS falls back to Menlo and Linux to the DejaVu faces.
-    public static readonly FontFamily Mono =
-        new("Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, Liberation Mono, monospace");
-
-    public static readonly FontFamily Serif =
-        new("Georgia, Times New Roman, DejaVu Serif, Liberation Serif, serif");
+    public static FontFamily Mono => AppTheme.Current.Mono;
+    public static FontFamily Serif => AppTheme.Current.Serif;
 
     public static TextBlock Text(string text, double size = 13, IBrush? color = null, bool mono = false) => new()
     {
@@ -57,7 +54,8 @@ public static class Ui
         FontSize = 10.5,
         LetterSpacing = 1.2,
         Foreground = color ?? Muted,
-        FontFamily = Mono,
+        FontFamily = AppTheme.Current.LabelFont,
+        FontWeight = AppTheme.IsBraun ? FontWeight.SemiBold : FontWeight.Normal,
         VerticalAlignment = VerticalAlignment.Center,
     };
 
@@ -65,6 +63,7 @@ public static class Ui
     {
         Text = text,
         FontFamily = Serif,
+        FontWeight = AppTheme.Current.DisplayWeight,
         FontSize = size,
         Foreground = Ink,
         TextWrapping = TextWrapping.Wrap,
@@ -154,14 +153,17 @@ public static class Ui
         body.Content = Text(text, 12);
         body.Padding = new Thickness(10, 5);
         body.IsHitTestVisible = click is not null;
+        if (AppTheme.IsBraun) body.CornerRadius = new CornerRadius(15);
 
-        return new Border
+        var chip = new Border
         {
             BorderBrush = Line,
             BorderThickness = new Thickness(1),
-            Background = Brush.Parse("#F3F4E9"),
+            Background = ChipFill,
             Child = remove is null ? body : Row(0, body, IconButton("close", "Remove", remove)),
         };
+        if (AppTheme.IsBraun) BraunParts.Key(chip, 15);
+        return chip;
     }
 
     public static Control Heading(string eyebrow, string title, string subtitle) => Stack(10,
@@ -170,7 +172,8 @@ public static class Ui
         new TextBlock { Text = subtitle, FontSize = 12, Foreground = Muted, TextWrapping = TextWrapping.Wrap });
 
     /// <summary>The Macrodata Refinement stat tile: index, value, rule, caption.</summary>
-    public static Control StatTile(string index, string value, string caption) => new Border
+    public static Control StatTile(string index, string value, string caption) =>
+        AppTheme.IsBraun ? BraunParts.StatTile(index, value, caption) : new Border
     {
         BorderBrush = Line,
         BorderThickness = new Thickness(1),
@@ -197,12 +200,14 @@ public static class Ui
         grid.Children.Add(new Border
         {
             Height = 3,
+            CornerRadius = new CornerRadius(AppTheme.IsBraun ? 1.5 : 0),
             Background = RowRule,
             HorizontalAlignment = HorizontalAlignment.Stretch,
         });
         grid.Children.Add(new Border
         {
             Height = 3,
+            CornerRadius = new CornerRadius(AppTheme.IsBraun ? 1.5 : 0),
             Background = Accent,
             HorizontalAlignment = HorizontalAlignment.Left,
             Width = Math.Clamp(percent, 0, 100),

@@ -173,6 +173,15 @@ public sealed class MainWindow : Window
         var identity = Ui.Row(11,
             new Glyph("crest") { Width = 17, Height = 17 },
             Ui.Label("SIR WORD-A-LOT", Ui.Ink));
+
+        // Braun flanks the name with the T 3's speaker grille, keeping the
+        // identity block itself centred exactly as the Classic one is.
+        if (AppTheme.IsBraun)
+        {
+            identity.Spacing = 14;
+            identity.Children.Insert(0, new Grille { Width = 132, Height = 20 });
+            identity.Children.Add(new Grille { Width = 132, Height = 20 });
+        }
         identity.HorizontalAlignment = HorizontalAlignment.Center;
         identity.VerticalAlignment = VerticalAlignment.Center;
         identity.Background = Brushes.Transparent;
@@ -201,7 +210,7 @@ public sealed class MainWindow : Window
         {
             Height = 43,
             Background = Ui.TitlebarActive,
-            BorderBrush = Ui.Line,
+            BorderBrush = AppTheme.IsBraun ? Ui.WindowBorder : Ui.Line,
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = new Panel { Children = { identity, controls } },
         };
@@ -322,9 +331,12 @@ public sealed class MainWindow : Window
         void Add(NavItem item)
         {
             var button = Ui.Button("", () => Navigate(item.Id), "nav");
-            button.Content = Ui.Row(11,
+            var caption = Ui.Row(11,
                 new Glyph(item.Glyph) { Width = 14, Height = 14 },
                 Ui.Text(TitleCase(item.Title), 12.5));
+            // Braun gives every entry an indicator lamp, lit on the selected one.
+            button.Content = AppTheme.IsBraun ? Ui.Columns("*,Auto", caption, BraunParts.Lamp()) : caption;
+            if (AppTheme.IsBraun) button.HorizontalContentAlignment = HorizontalAlignment.Stretch;
             _navButtons[item.Id] = button;
             panel.Children.Add(button);
         }
@@ -345,9 +357,11 @@ public sealed class MainWindow : Window
         {
             Width = 170,
             Background = Ui.Sidebar,
-            BorderBrush = Ui.Line,
+            BorderBrush = AppTheme.IsBraun ? Ui.WindowBorder : Ui.Line,
             BorderThickness = new Thickness(0, 0, 1, 0),
-            Child = Ui.Scroll(panel),
+            Child = AppTheme.IsBraun
+                ? new Panel { Children = { new BrushedMetal(), Ui.Scroll(panel) } }
+                : Ui.Scroll(panel),
         };
     }
 
@@ -378,16 +392,37 @@ public sealed class MainWindow : Window
             if (WindowState == WindowState.Normal) BeginResizeDrag(WindowEdge.SouthEast, e);
         };
 
-        var right = Ui.Row(14, _statusRight, grip);
+        Control left = _statusLeft;
+        Control status = _statusRight;
+
+        // Braun reads the status out through two small calculator windows.
+        if (AppTheme.IsBraun)
+        {
+            foreach (var text in new[] { _statusLeft, _statusRight })
+            {
+                text.Foreground = Ui.Phosphor;
+                text.FontFamily = Ui.Mono;
+                text.FontWeight = FontWeight.Normal;
+                text.FontSize = 10.5;
+            }
+            left = BraunParts.Readout(_statusLeft, new Thickness(10, 4));
+            left.HorizontalAlignment = HorizontalAlignment.Left;
+            left.VerticalAlignment = VerticalAlignment.Center;
+            status = BraunParts.Readout(_statusRight, new Thickness(10, 4));
+            status.VerticalAlignment = VerticalAlignment.Center;
+        }
+
+        var right = Ui.Row(14, status, grip);
         right.HorizontalAlignment = HorizontalAlignment.Right;
 
         return new Border
         {
             Height = 42,
-            BorderBrush = Ui.Line,
+            Background = AppTheme.IsBraun ? Ui.TitlebarInactive : null,
+            BorderBrush = AppTheme.IsBraun ? Ui.WindowBorder : Ui.Line,
             BorderThickness = new Thickness(0, 1, 0, 0),
             Padding = new Thickness(18, 0),
-            Child = Ui.Columns("*,Auto", _statusLeft, right),
+            Child = Ui.Columns("*,Auto", left, right),
         };
     }
 

@@ -1,0 +1,271 @@
+<!--
+  The Braun theme, layered over Shell/Controls.axaml while it is chosen.
+
+  Every rule here overrides one there, so Classic stays exactly as it was. The
+  language is a Braun appliance: moulded keys lit from above that sink when
+  pressed, fields pressed into the housing, one orange key per screen.
+-->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <!-- Fluent reads these for the toggle switch and focus accents. -->
+    <Color x:Key="SystemAccentColor">#E8661F</Color>
+    <Color x:Key="SystemAccentColorDark1">#D2581A</Color>
+    <Color x:Key="SystemAccentColorDark2">#B84A12</Color>
+    <Color x:Key="SystemAccentColorDark3">#8F390C</Color>
+    <Color x:Key="SystemAccentColorLight1">#EE8448</Color>
+    <Color x:Key="SystemAccentColorLight2">#F3A374</Color>
+    <Color x:Key="SystemAccentColorLight3">#F8C3A2</Color>
+    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#E8661F"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#EE7632"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#D2581A"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#B84A12"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#E3E0D8"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#DAD6CD"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#A9A59B"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOffPointerOver" Color="#8C887F"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="#5A5852"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPointerOver" Color="#3A3935"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ToggleSwitchContentForeground" Color="#262624"/>
+
+    <LinearGradientBrush x:Key="BraunKey" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#FDFCFA" Offset="0"/><GradientStop Color="#E6E3DC" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunKeyHover" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#FFFFFF" Offset="0"/><GradientStop Color="#EDEAE4" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunKeyDown" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#DAD6CE" Offset="0"/><GradientStop Color="#E9E6DF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunOrange" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#F38A4A" Offset="0"/><GradientStop Color="#E0601A" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunOrangeHover" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#F69A5E" Offset="0"/><GradientStop Color="#E66A24" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunOrangeDown" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#CF5617" Offset="0"/><GradientStop Color="#E26A2A" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BraunTray" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#C5C3BC" Offset="0"/><GradientStop Color="#D3D1CB" Offset="1"/>
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+    <Setter Property="Foreground" Value="#262624"/>
+  </Style>
+
+  <!-- Plain buttons: list rows, icon buttons. Flat until touched. -->
+  <Style Selector="Button">
+    <Setter Property="Foreground" Value="#262624"/><Setter Property="CornerRadius" Value="7"/>
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#DFDCD4"/><Setter Property="Foreground" Value="#1A1A18"/>
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#D3CFC6"/>
+  </Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Foreground" Value="#AAA69D"/><Setter Property="Background" Value="Transparent"/>
+  </Style>
+  <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#F4E3D3"/>
+  </Style>
+
+  <!-- The secondary key: white plastic, domed by a gradient and a lit top edge. -->
+  <Style Selector="Button.outline">
+    <Setter Property="Background" Value="{StaticResource BraunKey}"/>
+    <Setter Property="BorderBrush" Value="#B5B1A7"/><Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="18"/><Setter Property="Padding" Value="18,0"/>
+  </Style>
+  <Style Selector="Button.outline /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BoxShadow" Value="0 1 2 0 #30000000, inset 0 1 0 0 #FFFFFFFF"/>
+  </Style>
+  <Style Selector="Button.outline:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunKeyHover}"/>
+    <Setter Property="BorderBrush" Value="#9E9A91"/>
+  </Style>
+  <Style Selector="Button.outline:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunKeyDown}"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #33000000"/>
+    <Setter Property="RenderTransform" Value="translateY(1px)"/>
+  </Style>
+  <Style Selector="Button.outline.selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunKeyDown}"/>
+    <Setter Property="BorderBrush" Value="#E8661F"/>
+  </Style>
+
+  <!-- The one orange key. -->
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{StaticResource BraunOrange}"/><Setter Property="Foreground" Value="#FFFFFF"/>
+    <Setter Property="BorderBrush" Value="#B9500F"/><Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="18"/><Setter Property="Padding" Value="22,0"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+  <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BoxShadow" Value="0 1 3 0 #50803000, inset 0 1 0 0 #60FFFFFF"/>
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunOrangeHover}"/><Setter Property="Foreground" Value="#FFFFFF"/>
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunOrangeDown}"/><Setter Property="Foreground" Value="#FFFFFF"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #50000000"/>
+    <Setter Property="RenderTransform" Value="translateY(1px)"/>
+  </Style>
+  <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#E6C2A8"/><Setter Property="Foreground" Value="#FFF6EF"/>
+  </Style>
+
+  <!-- Sidebar entries sit in a milled tray when selected, with the lamp lit. -->
+  <Style Selector="Button.nav">
+    <Setter Property="Margin" Value="8,0"/><Setter Property="Padding" Value="12,8"/>
+    <Setter Property="CornerRadius" Value="8"/>
+  </Style>
+  <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#40FFFFFF"/>
+  </Style>
+  <Style Selector="Button.nav.selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunTray}"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #40000000, 0 1 0 0 #90FFFFFF"/>
+  </Style>
+  <Style Selector="Ellipse.lamp"><Setter Property="Fill" Value="#B9B5AC"/></Style>
+  <Style Selector="Button.selected Ellipse.lamp"><Setter Property="Fill" Value="#F07A2E"/></Style>
+
+  <!-- Window buttons: small round keys. -->
+  <Style Selector="Button.chrome">
+    <Setter Property="Width" Value="26"/><Setter Property="Height" Value="26"/>
+    <Setter Property="MinHeight" Value="0"/><Setter Property="Padding" Value="0"/>
+    <Setter Property="Margin" Value="3,0"/><Setter Property="CornerRadius" Value="13"/>
+    <Setter Property="Background" Value="{StaticResource BraunKey}"/>
+    <Setter Property="BorderBrush" Value="#B5B1A7"/><Setter Property="BorderThickness" Value="1"/>
+  </Style>
+  <Style Selector="Button.chrome /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BoxShadow" Value="0 1 2 0 #30000000, inset 0 1 0 0 #FFFFFFFF"/>
+  </Style>
+  <Style Selector="Button.chrome:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunKeyHover}"/>
+  </Style>
+  <Style Selector="Button.chrome:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BraunKeyDown}"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #33000000"/>
+  </Style>
+
+  <Style Selector="Button.dark"><Setter Property="Foreground" Value="#F5B04A"/></Style>
+  <Style Selector="Button.dark:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#34342F"/><Setter Property="Foreground" Value="#FFC766"/>
+  </Style>
+
+  <!-- Fields are pressed into the housing rather than drawn on it. -->
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="9"/><Setter Property="Background" Value="#F8F7F3"/>
+    <Setter Property="BorderBrush" Value="#BDB9AF"/><Setter Property="Foreground" Value="#262624"/>
+    <Setter Property="SelectionBrush" Value="#F6C7A6"/><Setter Property="CaretBrush" Value="#E8661F"/>
+  </Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement">
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #26000000, 0 1 0 0 #FFFFFFFF"/>
+  </Style>
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#9E9A91"/><Setter Property="Background" Value="#FBFAF7"/>
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#E8661F"/><Setter Property="Background" Value="#FFFFFF"/>
+  </Style>
+  <Style Selector="TextBox.terminal">
+    <Setter Property="Foreground" Value="#F5B04A"/><Setter Property="CaretBrush" Value="#F5B04A"/>
+    <Setter Property="Background" Value="#1F1F1D"/>
+  </Style>
+
+  <!-- Dropdowns are keys too, with a tray for their list. -->
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="9"/><Setter Property="Background" Value="{StaticResource BraunKey}"/>
+    <Setter Property="BorderBrush" Value="#B5B1A7"/><Setter Property="Foreground" Value="#262624"/>
+    <Setter Property="PlaceholderForeground" Value="#8C887F"/>
+  </Style>
+  <Style Selector="ComboBox /template/ Border#Background">
+    <Setter Property="CornerRadius" Value="9"/><Setter Property="Background" Value="{StaticResource BraunKey}"/>
+    <Setter Property="BorderBrush" Value="#B5B1A7"/>
+    <Setter Property="BoxShadow" Value="0 1 2 0 #26000000, inset 0 1 0 0 #FFFFFFFF"/>
+  </Style>
+  <Style Selector="ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="Background" Value="{StaticResource BraunKeyHover}"/><Setter Property="BorderBrush" Value="#9E9A91"/>
+  </Style>
+  <Style Selector="ComboBox:pressed /template/ Border#Background">
+    <Setter Property="Background" Value="{StaticResource BraunKeyDown}"/><Setter Property="BorderBrush" Value="#9E9A91"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 3 0 #33000000"/>
+  </Style>
+  <Style Selector="ComboBox:focus /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="#E8661F"/>
+  </Style>
+  <Style Selector="ComboBox /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="#F4F2ED"/><Setter Property="BorderBrush" Value="#A9A59B"/>
+    <Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="4"/>
+  </Style>
+  <Style Selector="ComboBox /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Foreground" Value="#E8661F"/>
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="CornerRadius" Value="6"/><Setter Property="Foreground" Value="#262624"/>
+  </Style>
+  <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#E6E2DA"/><Setter Property="Foreground" Value="#1A1A18"/>
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="#F4E3D3"/><Setter Property="Foreground" Value="#1A1A18"/>
+  </Style>
+  <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#F0D6BF"/><Setter Property="Foreground" Value="#1A1A18"/>
+  </Style>
+
+  <Style Selector="CheckBox"><Setter Property="Foreground" Value="#262624"/></Style>
+  <Style Selector="CheckBox /template/ Border#NormalRectangle">
+    <Setter Property="CornerRadius" Value="5"/><Setter Property="Background" Value="#F8F7F3"/>
+    <Setter Property="BorderBrush" Value="#A9A59B"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 2 0 #26000000"/>
+  </Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#8C887F"/>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="{StaticResource BraunOrange}"/><Setter Property="BorderBrush" Value="#B9500F"/>
+    <Setter Property="BoxShadow" Value="inset 0 1 0 0 #60FFFFFF"/>
+  </Style>
+  <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="{StaticResource BraunOrangeHover}"/><Setter Property="BorderBrush" Value="#B9500F"/>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+    <Setter Property="Fill" Value="#FFFFFF"/>
+  </Style>
+  <Style Selector="CheckBox:indeterminate /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="#A9A59B"/><Setter Property="BorderBrush" Value="#A9A59B"/>
+  </Style>
+
+  <Style Selector="ContextMenu">
+    <Setter Property="Background" Value="#F4F2ED"/><Setter Property="BorderBrush" Value="#A9A59B"/>
+    <Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="4"/>
+  </Style>
+  <Style Selector="MenuItem">
+    <Setter Property="Foreground" Value="#262624"/>
+  </Style>
+  <Style Selector="MenuItem /template/ Border#PART_LayoutRoot">
+    <Setter Property="CornerRadius" Value="6"/>
+  </Style>
+  <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="#E6E2DA"/>
+  </Style>
+  <Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="#F4E3D3"/>
+  </Style>
+  <Style Selector="MenuItem:disabled"><Setter Property="Foreground" Value="#AAA69D"/></Style>
+  <Style Selector="MenuItem.danger"><Setter Property="Foreground" Value="#C4452A"/></Style>
+  <Style Selector="Separator"><Setter Property="Background" Value="#CBC7BD"/></Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#1F1F1D"/><Setter Property="Foreground" Value="#F2EFE8"/>
+    <Setter Property="CornerRadius" Value="6"/><Setter Property="BorderThickness" Value="0"/>
+  </Style>
+
+</Styles>

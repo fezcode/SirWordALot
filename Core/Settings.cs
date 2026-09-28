@@ -32,6 +32,13 @@ public sealed class Settings(Db db)
         set => Set("palette", value);
     }
 
+    /// <summary>The whole visual style: "Classic" or "Braun".</summary>
+    public string Theme
+    {
+        get => Get("theme", "Classic");
+        set => Set("theme", value);
+    }
+
     public bool Motion
     {
         get => GetBool("motion", true);

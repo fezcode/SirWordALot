@@ -15,6 +15,7 @@
     <Compile Include="../../Views/**/*.cs" LinkBase="Views" />
     <!-- The application's own stylesheet, so previews render exactly what ships. -->
     <AvaloniaResource Include="../../Shell/Controls.axaml" Link="Shell/Controls.axaml" />
+    <AvaloniaResource Include="../../Shell/Braun.axaml" Link="Shell/Braun.axaml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.0" />

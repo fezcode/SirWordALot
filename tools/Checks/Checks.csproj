@@ -13,6 +13,8 @@
                       LogicalName="SirWordALot.Assets.dictionary.json.gz" />
     <Compile Include="../../Shell/**/*.cs" LinkBase="Shell" />
     <Compile Include="../../Views/**/*.cs" LinkBase="Views" />
+    <!-- Loaded by AppTheme.Apply, so the theme check exercises the real stylesheet. -->
+    <AvaloniaResource Include="../../Shell/Braun.axaml" Link="Shell/Braun.axaml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.0" />

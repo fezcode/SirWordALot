@@ -93,6 +93,34 @@ internal static class Program
         Console.WriteLine("  wrote banner.png");
 
         window.Close();
+
+        // The Braun theme, in a folder of its own so tools/Measure keeps measuring
+        // Classic. Its windows are built after the switch, as the app rebuilds its own.
+        var braun = Path.Combine(folder, "braun");
+        Directory.CreateDirectory(braun);
+        AppTheme.Apply("Braun");
+        foreach (var style in new[] { TitlebarStyle.WindowsRight, TitlebarStyle.TrafficLightsLeft })
+        {
+            var themed = new MainWindow(library, settings, new Search(db), new Stats(db), new StubLookup(), style);
+            themed.Show();
+            var suffix = style == TitlebarStyle.TrafficLightsLeft ? "-unix" : "";
+            var views = style == TitlebarStyle.TrafficLightsLeft ? ["library"] : Views;
+            foreach (var view in views)
+            {
+                themed.Navigate(view);
+                Render(themed, Path.Combine(braun, $"{view}{suffix}.png"));
+                Console.WriteLine($"  wrote braun/{view}{suffix}.png");
+            }
+            if (style == TitlebarStyle.WindowsRight)
+            {
+                themed.Navigate("library", library.FindEntry("eminence")!.Id);
+                Render(themed, Path.Combine(braun, "entry.png"));
+                Console.WriteLine("  wrote braun/entry.png");
+            }
+            themed.Close();
+        }
+        AppTheme.Apply("Classic");
+
         Console.WriteLine($"Previews written to {Path.GetFullPath(folder)}.");
         return 0;
     }

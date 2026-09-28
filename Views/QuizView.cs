@@ -292,9 +292,9 @@ public sealed class QuizView : UserControl, IReceivesArgument
             var button = Ui.Button("", () => Commit(chosen), preselected ? "primary" : "outline");
             button.Content = Ui.Stack(4,
                 Ui.Text(caption + (preselected ? "  ·  Enter" : ""), 13,
-                    preselected ? Brush.Parse("#F0F0DF") : Ui.Ink),
+                    preselected ? Ui.OnPrimary : Ui.Ink),
                 Ui.Label(days == 0 ? "NOW" : $"{days} D",
-                    preselected ? Brush.Parse("#BFD8C9") : Ui.Muted));
+                    preselected ? Ui.OnPrimaryMuted : Ui.Muted));
             row.Children.Add(button);
         }
 

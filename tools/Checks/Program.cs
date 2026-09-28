@@ -36,6 +36,7 @@ internal static class Program
         Section("stats view", CheckStatsView);
         Section("settings view", CheckSettingsView);
         Section("command palette", CheckCommandPalette);
+        Section("themes", CheckThemes);
 
         Console.WriteLine();
         Console.WriteLine(_failures == 0
@@ -682,6 +683,58 @@ internal static class Program
                     [RelationKind.Rhyme] = [],
                 },
                 Online: true, Message: null));
+    }
+
+    /// <summary>Braun must build every view, and switching back must return Classic
+    /// exactly, or the palette checks above would only hold on a fresh start.</summary>
+    private static void CheckThemes()
+    {
+        var baseline = Application.Current!.Styles.Count;
+        try
+        {
+            AppTheme.Apply("braun");
+            Expect("names are case-insensitive", "Braun", AppTheme.Current.Name);
+            Expect("braun accent is orange", "#FFE8661F", Hex(Ui.Accent));
+            Expect("braun close is orange", "#FFE8661F", Hex(Ui.SignalClose));
+            Expect("braun maximize is green", "#FF6C9A4B", Hex(Ui.SignalMaximize));
+            Expect("braun layers one stylesheet", baseline + 1, Application.Current.Styles.Count);
+            Expect("braun display is sans", "Inter", Ui.Display("Eminence").FontFamily.Name);
+            Expect("braun display is light", FontWeight.Light, Ui.Display("Eminence").FontWeight);
+            Expect("braun heat has five levels", 5, AppTheme.Current.HeatLevels.Length);
+
+            AppTheme.Apply("Braun");
+            Expect("reapplying does not stack", baseline + 1, Application.Current.Styles.Count);
+
+            var db = Db.OpenMemory();
+            var library = new Library(db);
+            library.AddEntry("eminence", "manual");
+            var settings = new Settings(db) { CaptureEnabled = false };
+
+            foreach (var style in new[] { TitlebarStyle.WindowsRight, TitlebarStyle.TrafficLightsLeft })
+            {
+                var window = new MainWindow(library, settings, new Search(db), new Stats(db), new StubLookup(), style);
+                window.Show();
+                foreach (var item in window.Nav)
+                {
+                    window.Navigate(item.Id);
+                    window.UpdateLayout();
+                    Expect($"braun {style} builds {item.Id}", item.Id, window.CurrentViewId);
+                }
+                Expect($"braun {style} highlights one row", 1, window.HighlightedNavIds.Count);
+                Expect($"braun {style} centres the title",
+                    HorizontalAlignment.Center, window.TitleBlock.HorizontalAlignment);
+                window.Close();
+            }
+        }
+        finally
+        {
+            AppTheme.Apply("nonsense");
+        }
+
+        Expect("unknown names fall back to classic", "Classic", AppTheme.Current.Name);
+        Expect("classic removes the layer", baseline, Application.Current.Styles.Count);
+        Expect("classic ink restored", "#FF173B40", Hex(Ui.Ink));
+        Expect("classic display restored", "Georgia", Ui.Display("Eminence").FontFamily.Name);
     }
 
     private static string Hex(IBrush brush) => ((ISolidColorBrush)brush).Color.ToString().ToUpperInvariant();

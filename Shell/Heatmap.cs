@@ -6,19 +6,10 @@ using SirWordALot.Core;
 namespace SirWordALot.Shell;
 
 /// <summary>A contribution grid: one column per week, one cell per day, tinted from
-/// the cream surface towards phosphor as the count rises.</summary>
+/// the surface towards the theme's accent as the count rises.</summary>
 public sealed class Heatmap(IReadOnlyList<HeatmapDay> days) : Control
 {
     private const double Cell = 11, Gap = 3;
-
-    private static readonly IBrush[] Levels =
-    [
-        Brush.Parse("#E3E6D8"),
-        Brush.Parse("#BFD7CB"),
-        Brush.Parse("#93BFAE"),
-        Brush.Parse("#63A28D"),
-        Brush.Parse("#3C7D69"),
-    ];
 
     protected override Size MeasureOverride(Size availableSize)
     {
@@ -39,8 +30,10 @@ public sealed class Heatmap(IReadOnlyList<HeatmapDay> days) : Control
                 ? 0
                 : Math.Clamp((int)Math.Ceiling(days[i].Count / (double)busiest * 4), 1, 4);
 
-            context.FillRectangle(Levels[level],
-                new Rect(week * (Cell + Gap), weekday * (Cell + Gap), Cell, Cell));
+            // Braun rounds each cell into a small key; Classic keeps square pixels.
+            context.FillRectangle(AppTheme.Current.HeatLevels[level],
+                new Rect(week * (Cell + Gap), weekday * (Cell + Gap), Cell, Cell),
+                AppTheme.IsBraun ? 2.5f : 0);
         }
     }
 }

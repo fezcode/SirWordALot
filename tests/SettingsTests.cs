@@ -11,6 +11,7 @@ public class SettingsTests
         var settings = new Settings(Db.OpenMemory());
 
         Assert.Equal("Petrol", settings.Palette);
+        Assert.Equal("Classic", settings.Theme);
         Assert.True(settings.Motion);
         Assert.Equal(SchedulerKind.Sm2, settings.Scheduler);
         Assert.Equal(30, settings.DailyGoal);
@@ -27,10 +28,11 @@ public class SettingsTests
     public void ValuesPersistAcrossInstances()
     {
         var db = Db.OpenMemory();
-        _ = new Settings(db) { Palette = "Midnight", NewPerDay = 5, Scheduler = SchedulerKind.Leitner };
+        _ = new Settings(db) { Palette = "Midnight", Theme = "Braun", NewPerDay = 5, Scheduler = SchedulerKind.Leitner };
 
         var reopened = new Settings(db);
         Assert.Equal("Midnight", reopened.Palette);
+        Assert.Equal("Braun", reopened.Theme);
         Assert.Equal(5, reopened.NewPerDay);
         Assert.Equal(SchedulerKind.Leitner, reopened.Scheduler);
     }
