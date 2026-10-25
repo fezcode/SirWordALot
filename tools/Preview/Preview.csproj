@@ -13,6 +13,8 @@
                       LogicalName="SirWordALot.Assets.dictionary.json.gz" />
     <Compile Include="../../Shell/**/*.cs" LinkBase="Shell" />
     <Compile Include="../../Views/**/*.cs" LinkBase="Views" />
+    <AvaloniaResource Include="../../Assets/icon.png" Link="Assets/icon.png" />
+    <AvaloniaResource Include="../../Assets/SirWordALot.ico" Link="Assets/SirWordALot.ico" />
     <!-- The application's own stylesheet, so previews render exactly what ships. -->
     <AvaloniaResource Include="../../Shell/Controls.axaml" Link="Shell/Controls.axaml" />
     <AvaloniaResource Include="../../Shell/Braun.axaml" Link="Shell/Braun.axaml" />

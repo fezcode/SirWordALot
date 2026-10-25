@@ -57,9 +57,7 @@ internal static class Program
         Render(window, Path.Combine(folder, "entry.png"));
         Console.WriteLine("  wrote entry.png");
 
-        // Several sizes so the .ico is crisp in the taskbar rather than a
-        // downscaled 256. The border thins and the mark grows as size drops,
-        // because a 6px frame at 16px would swallow the glyph.
+        // Preview the same approved artwork used by the executable and window.
         foreach (var size in new[] { 16, 24, 32, 48, 64, 128, 256 })
         {
             RenderIcon(Path.Combine(folder, $"icon-{size}.png"), size);
@@ -141,18 +139,7 @@ internal static class Program
 
     private static void RenderIcon(string path, int size)
     {
-        var border = size <= 32 ? 0 : Math.Max(1.0, size / 42.0);
-        var mark = size * (size <= 32 ? 0.88 : 0.67);
-
-        var panel = new Border
-        {
-            Width = size,
-            Height = size,
-            Background = Ui.Cream,
-            BorderBrush = Ui.WindowBorder,
-            BorderThickness = new Thickness(border),
-            Child = new Glyph("crest") { Width = mark, Height = mark },
-        };
+        var panel = AppIcon.Mark(size);
 
         panel.Measure(new Size(size, size));
         panel.Arrange(new Rect(0, 0, size, size));

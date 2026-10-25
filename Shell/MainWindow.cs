@@ -94,6 +94,7 @@ public sealed class MainWindow : Window
         TitlebarStyle = titlebar ?? Platform.DefaultTitlebarStyle;
 
         Title = "Sir Word-a-lot";
+        Icon = AppIcon.Window();
         SystemDecorations = SystemDecorations.None;
         Background = Ui.Cream;
         Width = 1180;
@@ -171,7 +172,7 @@ public sealed class MainWindow : Window
         // rather than a Grid column, so it does not shift when the controls on one
         // side are a different width from the space on the other.
         var identity = Ui.Row(11,
-            new Glyph("crest") { Width = 17, Height = 17 },
+            AppIcon.Mark(20),
             Ui.Label("SIR WORD-A-LOT", Ui.Ink));
 
         // Braun flanks the name with the T 3's speaker grille, keeping the

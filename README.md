@@ -198,3 +198,7 @@ An independent project, unaffiliated with Apple or *Severance*.
 ## License
 
 [MIT](LICENSE.txt)
+
+## Application icon
+
+The approved transparent artwork is `Assets/icon-master.png`. Run `python tools/make-icon.py` with Python and Pillow to regenerate the PNG sizes, Windows ICO and raster-backed SVG wrapper. Generated assets are committed; normal builds do not require Python.

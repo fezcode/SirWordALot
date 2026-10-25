@@ -77,8 +77,10 @@ internal static class Program
         using (bitmap)
         {
             Expect("icon size", 256, bitmap.Width);
-            Expect("icon border", "#9CAEA0", Hex(bitmap, 2, 128));
-            Expect("icon field", "#ECEDE0", Hex(bitmap, 128, 20));
+            Expect("icon height", 256, bitmap.Height);
+            Expect("icon transparent surround", (byte)0, bitmap.GetPixel(0, 0).Alpha);
+            Expect("icon visible centre", true, bitmap.GetPixel(128, 128).Alpha > 200);
+            Expect("icon coloured artwork", true, DistinctColours(bitmap, 32, 32, 192, 192) > 32);
         }
     }
 
