@@ -9,10 +9,8 @@ publisher = "Samil Bulbul"
 comments  = "Vocabulary and thesaurus trainer with spaced repetition"
 
 [ui]
-# huh is the only shipped theme that asks the engine for a real Mica backdrop,
-# so the wizard picks up the desktop tint behind it instead of painting its own
-# ground. It lays the steps out as a rail down the left.
-theme        = "huh"
+# glass = frosted acrylic over the desktop, matching the other Fezcode installers.
+theme        = "glass"
 window_title = "Sir Word-a-lot Setup"
 
 [install]
@@ -24,7 +22,7 @@ default_dir = "${LOCALAPPDATA}/Programs/SirWordALot"
 [uninstall]
 settings_dirs = ["${APPDATA}/fezcode/SirWordALot"]
 
-# Step titles double as the labels in huh's left rail, so they are short. The
+# Step titles double as the labels in the wizard's left rail, so they are short. The
 # rail already heads itself with the app name and version, and each body carries
 # the version where it matters; version.ps1 rewrites those on a bump. Do not put
 # a version number in a comment here — version.ps1 will not rewrite it and it
